@@ -131,6 +131,13 @@ SHARED_FLAGS := -DHAVE_GCM \
 CFLAGS += -std=gnu99 $(SHARED_FLAGS)
 CXXFLAGS += $(SHARED_FLAGS)
 
+# griffin.o is a unity build: with the content database, the audio mixer
+# and the translations enabled, its TOC grows past the 64 KiB reach of the
+# PPC64 small code model and the link fails with "relocation truncated to
+# fit: R_PPC64_TOC16_DS". powerpc64-ps3-elf has no -mcmodel=medium, so use
+# a minimal TOC (one entry per object file) for the frontend instead.
+CFLAGS += -mminimal-toc
+
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
 else
