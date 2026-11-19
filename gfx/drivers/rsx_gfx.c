@@ -354,6 +354,16 @@ static bool rsx_retire_hw_memory(void *data, void *memory)
    return true;
 }
 
+/* Waits for the RSX to be done with every command queued so far.
+ * rsxFinish() spins until the REF register holds the value it is
+ * given, and the register keeps it: called again with the same
+ * value, it returns at once, the RSX maybe still reading what is
+ * freed next. A value the register does not hold makes it wait. */
+static void rsx_finish(gcmContextData *context)
+{
+   rsxFinish(context, gcmGetControlRegister()->ref + 1);
+}
+
 #define rsx_context_bind_hw_render(rsx, enable) \
    if (rsx->shared_context_use) \
       rsx->ctx_driver->bind_hw_render(rsx->ctx_data, enable)
@@ -661,7 +671,7 @@ static void rsx_font_free(void *data,
     *
     * Previously #if 0'd out, leaking font RSX memory on every
     * font scale change or context reset. */
-   rsxFinish(font->rsx->context, 0);
+   rsx_finish(font->rsx->context);
 
    /* Kept in texture memory, the atlas's last buffer went to
     * rsx_font_storage_free with the font driver's */
@@ -1280,7 +1290,7 @@ static bool rsx_load_texture_data(rsx_t* rsx, rsx_texture_t *texture,
       /* The RSX may still be reading it, as in
        * rsx_unload_texture_internal */
       if (rsx && rsx->context)
-         rsxFinish(rsx->context, 0);
+         rsx_finish(rsx->context);
       rsxFree(texture->data);
       texture->data = NULL;
       texture->size = 0;
@@ -1451,12 +1461,32 @@ static bool rsx_tasks_finder(retro_task_t *task,void *userdata) { return task; }
 task_finder_data_t rsx_tasks_finder_data = {rsx_tasks_finder, NULL};
 #endif
 
+/* The display and depth buffers outlive the driver, as the context
+ * does (rsx_init_screen): the display scans out of them until the
+ * next driver flips. That one takes them back, for a screen of the
+ * same size, instead of taking more RSX memory on each content load
+ * or close and each video reinit. */
+static rsx_buffer rsx_kept_buffers[RSX_MAX_BUFFERS + RSX_MAX_MENU_BUFFERS];
+static u32 *rsx_kept_depth_buffer;
+static u32 rsx_kept_depth_size;
+
 static int rsx_make_buffer(rsx_buffer *buffer, u16 width, u16 height, int id)
 {
    int depth         = sizeof(u32);
    int pitch         = depth * width;
    int size          = depth * width * height;
-   if (!(buffer->ptr = (uint32_t*)rsxMemalign (64, size)))
+   rsx_buffer *kept  = &rsx_kept_buffers[id];
+
+   /* For another screen size: the RSX is idle (rsx_init_screen) */
+   if (kept->ptr && (kept->width != width || kept->height != height))
+   {
+      rsxFree(kept->ptr);
+      kept->ptr = NULL;
+   }
+
+   if (kept->ptr)
+      buffer->ptr = kept->ptr;
+   else if (!(buffer->ptr = (uint32_t*)rsxMemalign (64, size)))
       goto error;
 
    if (rsxAddressToOffset(buffer->ptr, &buffer->offset) != 0)
@@ -1469,6 +1499,7 @@ static int rsx_make_buffer(rsx_buffer *buffer, u16 width, u16 height, int id)
    buffer->width  = width;
    buffer->height = height;
    buffer->id     = id;
+   *kept          = *buffer;
 
    return 1;
 
@@ -1476,6 +1507,7 @@ error:
    if (buffer->ptr)
       rsxFree (buffer->ptr);
    buffer->ptr = NULL;
+   kept->ptr   = NULL;
    return 0;
 }
 
@@ -1492,28 +1524,19 @@ static int rsx_flip(gcmContextData *context, s32 buffer)
 
 #define GCM_LABEL_INDEX		255
 
-static void rsx_wait_finish(gcmContextData *context, u32 sLabelVal)
-{
-  rsxSetWriteBackendLabel(context, GCM_LABEL_INDEX, sLabelVal);
-
-  rsxFlushBuffer(context);
-
-  while(*(vu32 *)gcmGetLabelAddress(GCM_LABEL_INDEX) != sLabelVal)
-    usleep(30);
-
-  sLabelVal++;
-}
-
+/* The value written is one the label does not hold: the same values
+ * each time (1, then 2) found the last wait's 2 still there, and the
+ * wait ended before the RSX got to it */
 static void rsx_wait_rsx_idle(gcmContextData *context)
 {
-  u32 sLabelVal = 1;
+   vu32 *label = (vu32*)gcmGetLabelAddress(GCM_LABEL_INDEX);
+   u32 value   = *label + 1;
 
-  rsxSetWriteBackendLabel(context, GCM_LABEL_INDEX, sLabelVal);
-  rsxSetWaitLabel(context, GCM_LABEL_INDEX, sLabelVal);
+   rsxSetWriteBackendLabel(context, GCM_LABEL_INDEX, value);
+   rsxFlushBuffer(context);
 
-  sLabelVal++;
-
-  rsx_wait_finish(context, sLabelVal);
+   while (*label != value)
+      usleep(30);
 }
 
 static void rsx_wait_flip(void)
@@ -1528,6 +1551,7 @@ static gcmContextData *rsx_init_screen(rsx_t* gcm)
    videoConfiguration vconfig;
    videoResolution res; /* Screen Resolution */
    unsigned resolution;
+   u32 depth_size;
    /* Context to keep track of the RSX buffer. */
    gcmContextData              *context = NULL;
    static gcmContextData *saved_context = NULL;
@@ -1594,8 +1618,22 @@ static gcmContextData *rsx_init_screen(rsx_t* gcm)
    gcmSetFlipMode(GCM_FLIP_VSYNC); /* Wait for VSYNC to flip */
 
    gcm->depth_pitch  = res.width * sizeof(u32);
-   if (!(gcm->depth_buffer = (u32 *)rsxMemalign(64, (res.height * gcm->depth_pitch))))  /* Beware, if was (res.height * gcm->depth_pitch) * 2 */
-      goto error;
+   depth_size        = res.height * gcm->depth_pitch;
+
+   /* Kept from the last driver (rsx_make_buffer); for another screen
+    * size, a new one, the RSX idle since the wait above */
+   if (rsx_kept_depth_buffer && rsx_kept_depth_size != depth_size)
+   {
+      rsxFree(rsx_kept_depth_buffer);
+      rsx_kept_depth_buffer = NULL;
+   }
+   if (!rsx_kept_depth_buffer)
+   {
+      if (!(rsx_kept_depth_buffer = (u32 *)rsxMemalign(64, depth_size)))
+         goto error;
+      rsx_kept_depth_size = depth_size;
+   }
+   gcm->depth_buffer = rsx_kept_depth_buffer;
 
    rsxAddressToOffset(gcm->depth_buffer, &gcm->depth_offset);
 
@@ -1847,7 +1885,8 @@ static void* rsx_init(const video_info_t* video)
 
 error:
    /* What the RSX has not drawn from goes. The display and depth
-    * buffers handed to it stay, as rsx_free leaves them. */
+    * buffers handed to it stay for the next driver, as rsx_free
+    * leaves them. */
    for (i = 0; i < RSX_MAX_SHADERS; i++)
       if (rsx->fp_buffer[i])
          rsxFree(rsx->fp_buffer[i]);
@@ -1923,7 +1962,7 @@ static void rsx_unload_texture_internal(void *data, uintptr_t handle)
           * texture's RSX memory permanently.  On PS3 with 256MB
           * RAM, menu navigation would eventually exhaust memory. */
          if (rsx && rsx->context)
-            rsxFinish(rsx->context, 0);
+            rsx_finish(rsx->context);
          rsxFree(texture->data);
       }
       free(texture);
@@ -2905,6 +2944,7 @@ static bool rsx_suppress_screensaver(void* data, bool enable) { return false; }
 
 static void rsx_free(void* data)
 {
+   int i;
    rsx_t* gcm = (rsx_t*)data;
 
    if (!gcm)
@@ -2912,36 +2952,40 @@ static void rsx_free(void* data)
 
    rsxClearSurface(gcm->context, GCM_CLEAR_Z);
    gcmSetWaitFlip(gcm->context);
-#if 0
-   /* TODO fix crash on loading core */
+
+   /* The context, its I/O memory and the display and depth buffers
+    * stay for the next driver (rsx_init_screen, rsx_make_buffer):
+    * finishing the context and freeing that memory under the next
+    * one was the crash on loading a core. What this driver drew with
+    * goes, or each content load or close and each video reinit loses
+    * it. The RSX is done with it first. */
+   rsx_fence_retired_memory(gcm->context);
+   rsx_finish(gcm->context);
+   rsx_collect_retired_memory();
+
+#ifdef HAVE_OVERLAY
+   rsx_free_overlay(gcm);
+#endif
+   for (i = 0; i < RSX_MAX_TEXTURES; i++)
+      if (gcm->texture[i].data)
+         rsxFree(gcm->texture[i].data);
+   if (gcm->menu_texture.data)
+      rsxFree(gcm->menu_texture.data);
+   if (gcm->white_texture)
+   {
+      if (gcm->white_texture->data)
+         rsxFree(gcm->white_texture->data);
+      free(gcm->white_texture);
+   }
+   for (i = 0; i < RSX_MAX_SHADERS; i++)
+      if (gcm->fp_buffer[i])
+         rsxFree(gcm->fp_buffer[i]);
    if (gcm->vertices)
       rsxFree(gcm->vertices);
    if (gcm->texture_vertices)
       rsxFree(gcm->texture_vertices);
-   for (i = 0; i < RSX_MAX_TEXTURES; i++)
-   {
-      if (gcm->texture[i].data)
-         rsxFree(gcm->texture[i].data);
-   }
-   if (gcm->menu_texture.data)
-     rsxFree(gcm->menu_texture.data);
-   if (gcm->white_texture)
-     rsx_unload_texture_internal(gcm, (uintptr_t)gcm->white_texture);
-   for (i = 0; i < RSX_MAX_BUFFERS; i++)
-     rsxFree(gcm->buffers[i].ptr);
-#if defined(HAVE_MENU_BUFFER)
-   for (i = 0; i < RSX_MAX_MENU_BUFFERS; i++)
-     rsxFree(gcm->menuBuffers[i].ptr);
-#endif
-   if (gcm->depth_buffer)
-     rsxFree(gcm->depth_buffer);
-   if (gcm->fp_buffer)
-     rsxFree(gcm->fp_buffer);
 
-   rsxFinish(gcm->context, 1);
-   free(gcm->host_addr);
-#endif
-   free (gcm);
+   free(gcm);
 }
 
 static void rsx_set_texture_frame(void* data, const void* frame, bool rgb32,

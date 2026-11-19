@@ -18,6 +18,9 @@
  *    turn gives a driver with everything it draws with, or none -
  *    and then leaves only the display and depth buffers it gave the
  *    RSX.
+ *  - reinit: rsx_free() then rsx_init(), as each content load or
+ *    close has them, take the display and depth buffers back and free
+ *    the rest, once the RSX is done with it: no RSX memory is lost.
  *  - font_sweep: rsx_font_init() likewise gives a font with its
  *    vertices and texture, or none.
  *  - overlay_sweep: rsx_overlay_load() likewise loads whole images
@@ -79,6 +82,10 @@ static void rsx_release_all(void)
       free(rsx_allocs[i].ptr);
       rsx_allocs[i].ptr = NULL;
    }
+   /* The display and depth buffers the driver keeps went with them */
+   memset(rsx_kept_buffers, 0, sizeof(rsx_kept_buffers));
+   rsx_kept_depth_buffer = NULL;
+   rsx_kept_depth_size   = 0;
 }
 
 void *rsxMemalign(u32 alignment, u32 size)
@@ -155,7 +162,18 @@ s32 rsxInit(gcmContextData **context, u32 cmdSize, u32 ioSize,
    return 0;
 }
 
-void rsxFinish(gcmContextData *context, u32 ref_value) { rsx_finish_calls++; }
+/* rsxFinish() has the RSX write its value to the REF register and
+ * spins until the register holds it: given the value the register
+ * already holds, it returns at once, with no wait for the RSX. Only
+ * the calls that wait are counted. */
+static gcmControlRegister fake_control = { 0, 0, 0xFFFFFFFFu };
+gcmControlRegister *gcmGetControlRegister(void) { return &fake_control; }
+void rsxFinish(gcmContextData *context, u32 ref_value)
+{
+   if (fake_control.ref != ref_value)
+      rsx_finish_calls++;
+   fake_control.ref = ref_value;
+}
 void rsxSetWaitForIdle(gcmContextData *context) { }
 void rsxSetWriteBackendLabel(gcmContextData *context, u8 index, u32 value)
 { if (!fake_defer_backend) fake_labels[index] = value; }
@@ -683,6 +701,71 @@ static void test_init_sweep(void)
       rsx_release_all();
    }
    printf("init_sweep: ok (%u allocations)\n", allocs);
+}
+
+/* A driver freed and initialised again, as each content load or close
+ * and each video reinit has it: the next one takes back the display
+ * and depth buffers, everything else goes once the RSX is done with
+ * it, and the RSX memory in use is the same from one to the next */
+static void test_reinit(void)
+{
+   static u8 frame[16 * 4 * 2];
+   video_info_t video = fake_video_info();
+   uint32_t *display[RSX_MAX_BUFFERS];
+   u32 *depth         = NULL;
+   unsigned i, k, finishes, live = 0;
+   rsx_t *rsx;
+
+   rsx_release_all();
+   rsx_fail_at = 0;
+   for (k = 0; k < 4; k++)
+   {
+      if (!(rsx = (rsx_t*)rsx_init(&video)))
+      {
+         CHECK(0, "reinit: rsx_init %u with memory", k);
+         break;
+      }
+      if (!k)
+      {
+         for (i = 0; i < RSX_MAX_BUFFERS; i++)
+            display[i] = rsx->buffers[i].ptr;
+         depth = rsx->depth_buffer;
+      }
+      else
+      {
+         for (i = 0; i < RSX_MAX_BUFFERS; i++)
+            CHECK(rsx->buffers[i].ptr == display[i],
+                  "reinit: init %u gave a new display buffer %u", k, i);
+         CHECK(rsx->depth_buffer == depth,
+               "reinit: init %u gave a new depth buffer", k);
+      }
+      /* Drawn with: a core frame and a menu frame */
+      rsx_load_texture_data(rsx, &rsx->texture[0], frame, 16, 4, 16 * 2,
+            false, false, TEXTURE_FILTER_NEAREST);
+      rsx_load_texture_data(rsx, &rsx->menu_texture, frame, 16, 4, 16 * 2,
+            false, true, TEXTURE_FILTER_NEAREST);
+      finishes = rsx_finish_calls;
+      rsx_free(rsx);
+      CHECK(rsx_finish_calls > finishes,
+            "reinit: free %u gave back RSX memory without waiting for "
+            "the RSX", k);
+      if (!k)
+         live = rsx_live();
+      else
+         CHECK(rsx_live() == live,
+               "reinit: %u RSX allocations live after free %u, %u "
+               "after the first", rsx_live(), k, live);
+   }
+   /* What is left is the display and depth buffers */
+#if defined(HAVE_MENU_BUFFER)
+   CHECK(live == RSX_MAX_BUFFERS + RSX_MAX_MENU_BUFFERS + 1,
+         "reinit: %u RSX allocations left after a free", live);
+#else
+   CHECK(live == RSX_MAX_BUFFERS + 1,
+         "reinit: %u RSX allocations left after a free", live);
+#endif
+   rsx_release_all();
+   printf("reinit: ok\n");
 }
 
 static void test_font_sweep(void)
@@ -1862,6 +1945,7 @@ int main(int argc, char **argv)
       { "texture_fail",  test_texture_fail  },
       { "frame_fail",    test_frame_fail    },
       { "init_sweep",    test_init_sweep    },
+      { "reinit",        test_reinit        },
       { "font_sweep",    test_font_sweep    },
       { "overlay_sweep", test_overlay_sweep },
       { "menu_vertices", test_menu_vertices },

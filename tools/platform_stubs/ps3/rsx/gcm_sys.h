@@ -112,6 +112,15 @@ typedef struct _gcmTexture
    u32 offset;
 } gcmTexture;
 
+/* The command buffer's registers; REF starts at 0xFFFFFFFF */
+typedef struct _gcmCtrlRegister
+{
+   volatile u32 put;
+   volatile u32 get;
+   volatile u32 ref;
+} gcmControlRegister;
+
+gcmControlRegister *gcmGetControlRegister(void);
 u32  gcmGetFlipStatus(void);
 u32 *gcmGetLabelAddress(const u8 index);
 void gcmResetFlipStatus(void);
