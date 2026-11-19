@@ -38,6 +38,7 @@
 #endif
 
 #include <compat/strl.h>
+#include <retro_miscellaneous.h>
 #include <string/stdstring.h>
 #include <streams/file_stream.h>
 #include <file/file_path.h>
@@ -648,6 +649,44 @@ static void frontend_ps3_process_args(int *argc, char *argv[])
 #endif
 }
 
+#ifndef IS_SALAMANDER
+/* The system language, so that a fresh retroarch.cfg starts in the
+ * console's language. The PS3 IDs are the same in the Cell SDK
+ * (CELL_SYSUTIL_LANG_*) and PSL1GHT (SYSUTIL_LANG_*). */
+static enum retro_language frontend_ps3_get_user_language(void)
+{
+   static const enum retro_language ps3_languages[] = {
+      RETRO_LANGUAGE_JAPANESE,            /*  0 Japanese */
+      RETRO_LANGUAGE_ENGLISH,             /*  1 English (US) */
+      RETRO_LANGUAGE_FRENCH,              /*  2 French */
+      RETRO_LANGUAGE_SPANISH,             /*  3 Spanish */
+      RETRO_LANGUAGE_GERMAN,              /*  4 German */
+      RETRO_LANGUAGE_ITALIAN,             /*  5 Italian */
+      RETRO_LANGUAGE_DUTCH,               /*  6 Dutch */
+      RETRO_LANGUAGE_PORTUGUESE_PORTUGAL, /*  7 Portuguese (Portugal) */
+      RETRO_LANGUAGE_RUSSIAN,             /*  8 Russian */
+      RETRO_LANGUAGE_KOREAN,              /*  9 Korean */
+      RETRO_LANGUAGE_CHINESE_TRADITIONAL, /* 10 Chinese (traditional) */
+      RETRO_LANGUAGE_CHINESE_SIMPLIFIED,  /* 11 Chinese (simplified) */
+      RETRO_LANGUAGE_FINNISH,             /* 12 Finnish */
+      RETRO_LANGUAGE_SWEDISH,             /* 13 Swedish */
+      RETRO_LANGUAGE_ENGLISH,             /* 14 Danish: no translation */
+      RETRO_LANGUAGE_NORWEGIAN,           /* 15 Norwegian */
+      RETRO_LANGUAGE_POLISH,              /* 16 Polish */
+      RETRO_LANGUAGE_PORTUGUESE_BRAZIL,   /* 17 Portuguese (Brazil) */
+      RETRO_LANGUAGE_BRITISH_ENGLISH,     /* 18 English (UK) */
+      RETRO_LANGUAGE_TURKISH              /* 19 Turkish */
+   };
+   int lang = 0;
+
+   if (     cellSysutilGetSystemParamInt(CELL_SYSUTIL_SYSTEMPARAM_ID_LANG, &lang) == 0
+         && lang >= 0
+         && (size_t)lang < ARRAY_SIZE(ps3_languages))
+      return ps3_languages[lang];
+   return RETRO_LANGUAGE_ENGLISH;
+}
+#endif
+
 frontend_ctx_driver_t frontend_ctx_ps3 = {
    frontend_ps3_get_env,
    frontend_ps3_init,
@@ -677,7 +716,11 @@ frontend_ctx_driver_t frontend_ctx_ps3 = {
    NULL,                         /* set_screen_brightness */
    NULL,                         /* set_sustained_performance_mode */
    NULL,                         /* get_cpu_model_name */
+#ifdef IS_SALAMANDER
    NULL,                         /* get_user_language */
+#else
+   frontend_ps3_get_user_language, /* get_user_language */
+#endif
    NULL,                         /* is_narrator_running */
    NULL,                         /* accessibility_speak */
    NULL,                         /* set_gamemode */
