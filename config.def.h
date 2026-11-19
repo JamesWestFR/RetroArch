@@ -728,9 +728,9 @@
 /* 1:1 PAR */
 #define DEFAULT_ASPECT_RATIO_AUTO false
 
-#if defined(_XBOX360) || defined(__PS3__)
+#if defined(_XBOX360)
 #define DEFAULT_ASPECT_RATIO_IDX ASPECT_RATIO_16_9
-#elif defined(PSP) || defined(_3DS) || defined(HAVE_LIBNX) || defined(VITA)
+#elif defined(PSP) || defined(_3DS) || defined(HAVE_LIBNX) || defined(VITA) || defined(__PS3__)
 #define DEFAULT_ASPECT_RATIO_IDX ASPECT_RATIO_CORE
 #elif defined(RARCH_CONSOLE)
 #define DEFAULT_ASPECT_RATIO_IDX ASPECT_RATIO_4_3
