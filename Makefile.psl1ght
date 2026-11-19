@@ -138,6 +138,11 @@ SHARED_FLAGS := -DHAVE_GCM \
 		-DHAVE_RMP3 \
 		-DHAVE_RFLAC \
 
+# Cg shader presets (.cgp). No Cg compiler runs on the console: the RSX
+# driver loads the programs cgcomp compiled ahead of time, a .vpo and a
+# .fpo next to each pass's .cg (rsx_shader_pass_load in rsx_gfx.c).
+SHARED_FLAGS += -DHAVE_CG
+
 CFLAGS += -std=gnu99 $(SHARED_FLAGS)
 CXXFLAGS += $(SHARED_FLAGS)
 

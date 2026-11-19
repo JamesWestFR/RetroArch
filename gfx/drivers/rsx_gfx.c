@@ -28,6 +28,8 @@
 #include <formats/image.h>
 #include <string/stdstring.h>
 #include <gfx/math/matrix_4x4.h>
+#include <file/file_path.h>
+#include <streams/file_stream.h>
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
@@ -50,6 +52,9 @@
 
 #include "../../driver.h"
 #include "../../retroarch.h"
+#ifdef HAVE_CG
+#include "../video_shader_parse.h"
+#endif
 #include <libretro_rsx.h>
 #ifdef HAVE_THREADS
 #include "../video_thread_wrapper.h"
@@ -137,6 +142,45 @@ typedef struct
    uint32_t offset;
 } rsx_buffer;
 
+#ifdef HAVE_CG
+/* What every pass is handed, besides the preset's parameters */
+enum rsx_shader_uniform
+{
+   RSX_UNIFORM_VIDEO_SIZE = 0,
+   RSX_UNIFORM_TEXTURE_SIZE,
+   RSX_UNIFORM_OUTPUT_SIZE,
+   RSX_UNIFORM_FRAME_COUNT,
+   RSX_UNIFORM_FRAME_DIRECTION,
+   RSX_UNIFORM_COUNT
+};
+
+/* A preset's pass. No Cg compiler runs on the console: the pass's
+ * programs are compiled ahead of time by cgcomp, a .vpo and a .fpo
+ * next to its .cg */
+typedef struct
+{
+   rsxVertexProgram   *vpo;
+   rsxFragmentProgram *fpo;
+   void               *vp_ucode;
+   /* The fragment program in RSX memory, where it runs from */
+   u32                *fp_buffer;
+   u32                 fp_offset;
+   rsxProgramConst    *mvp;
+   rsxProgramConst    *vp_uniform[RSX_UNIFORM_COUNT];
+   rsxProgramConst    *fp_uniform[RSX_UNIFORM_COUNT];
+   /* The preset's parameters, as uniforms (PARAMETER_UNIFORM) */
+   rsxProgramConst    *vp_param[GFX_MAX_PARAMETERS];
+   rsxProgramConst    *fp_param[GFX_MAX_PARAMETERS];
+   rsxProgramAttrib   *position;
+   rsxProgramAttrib   *texcoord;
+   rsxProgramAttrib   *color;
+   u32                 tex_unit;
+   u32                 wrap;
+   unsigned            filter;
+   unsigned            frame_count_mod;
+} rsx_shader_pass_t;
+#endif
+
 typedef struct
 {
    video_viewport_t vp;
@@ -223,6 +267,12 @@ typedef struct
    /* The last presented image carries frontend layers: a duped frame
     * without any is presented once more to take them off */
    bool ui_presented;
+#ifdef HAVE_CG
+   /* The preset the core frame is drawn with, NULL for none */
+   rsx_shader_pass_t *shader_pass;
+   struct video_shader *shader_preset;
+   uint64_t frame_count;
+#endif
 } rsx_t;
 
 #include "../font_driver.h"
@@ -1783,6 +1833,8 @@ static bool rsx_init_shader(rsx_t *rsx)
 
 static uintptr_t rsx_load_texture_internal(void *video_data, void *data,
       enum texture_filter_type filter_type);
+static bool rsx_set_shader(void* data,
+      enum rarch_shader_type type, const char* path);
 
 static void* rsx_init(const video_info_t* video)
 {
@@ -1881,6 +1933,15 @@ static void* rsx_init(const video_info_t* video)
    rsx->hw_interface.io_used           = CB_SIZE + 64 * 1024;
    rsx->hw_interface.set_image         = rsx_set_hw_image;
    rsx->hw_interface.retire_memory     = rsx_retire_hw_memory;
+#ifdef HAVE_CG
+   {
+      /* With a context driver that has flags, RetroArch leaves the
+       * shader preset to the driver: video_driver_init_internal */
+      const char *preset = video_shader_get_current_shader_preset();
+      if (preset && *preset)
+         rsx_set_shader(rsx, video_shader_parse_type(preset), preset);
+   }
+#endif
    return rsx;
 
 error:
@@ -2270,57 +2331,44 @@ static void rsx_clear_surface(rsx_t* rsx)
    rsxSetZMinMaxControl(rsx->context, 0, 1, 1);
 }
 
+/* The core frame's quad, written where the RSX is pointed at next */
+static rsx_vertex_t *rsx_frame_quad(rsx_t *rsx)
+{
+   static const float quad[4][4] = {
+      /* x     y     u     v */
+      { 0.0f, 0.0f, 0.0f, 1.0f },
+      { 1.0f, 0.0f, 1.0f, 1.0f },
+      { 0.0f, 1.0f, 0.0f, 0.0f },
+      { 1.0f, 1.0f, 1.0f, 0.0f }
+   };
+   unsigned i;
+   rsx_vertex_t *vertices;
+
+   if (rsx->vert_idx + 4 > RSX_MAX_VERTICES)
+      rsx->vert_idx = 0;
+   vertices         = &rsx->vertices[rsx->vert_idx];
+   for (i = 0; i < 4; i++)
+   {
+      vertices[i].x = quad[i][0];
+      vertices[i].y = quad[i][1];
+      vertices[i].u = quad[i][2];
+      vertices[i].v = quad[i][3];
+      vertices[i].r = 1.0f;
+      vertices[i].g = 1.0f;
+      vertices[i].b = 1.0f;
+      vertices[i].a = 1.0f;
+   }
+   rsx->vert_idx   += 4;
+   return vertices;
+}
+
 static void rsx_draw_vertices(rsx_t* rsx)
 {
-   rsx_vertex_t *vertices      = NULL;
-   int end_vert_idx            = rsx->vert_idx + 4;
-   if (end_vert_idx > RSX_MAX_VERTICES)
-   {
-      rsx->vert_idx            = 0;
-      end_vert_idx             = rsx->vert_idx + 4;
-   }
-   vertices                    = &rsx->vertices[rsx->vert_idx];
+   rsx_vertex_t *vertices      = rsx_frame_quad(rsx);
 
-   vertices[rsx->vert_idx+0].x = 0.0f;
-   vertices[rsx->vert_idx+0].y = 0.0f;
-   vertices[rsx->vert_idx+0].u = 0.0f;
-   vertices[rsx->vert_idx+0].v = 1.0f;
-   vertices[rsx->vert_idx+0].r = 1.0f;
-   vertices[rsx->vert_idx+0].g = 1.0f;
-   vertices[rsx->vert_idx+0].b = 1.0f;
-   vertices[rsx->vert_idx+0].a = 1.0f;
-
-   vertices[rsx->vert_idx+1].x = 1.0f;
-   vertices[rsx->vert_idx+1].y = 0.0f;
-   vertices[rsx->vert_idx+1].u = 1.0f;
-   vertices[rsx->vert_idx+1].v = 1.0f;
-   vertices[rsx->vert_idx+1].r = 1.0f;
-   vertices[rsx->vert_idx+1].g = 1.0f;
-   vertices[rsx->vert_idx+1].b = 1.0f;
-   vertices[rsx->vert_idx+1].a = 1.0f;
-
-   vertices[rsx->vert_idx+2].x = 0.0f;
-   vertices[rsx->vert_idx+2].y = 1.0f;
-   vertices[rsx->vert_idx+2].u = 0.0f;
-   vertices[rsx->vert_idx+2].v = 0.0f;
-   vertices[rsx->vert_idx+2].r = 1.0f;
-   vertices[rsx->vert_idx+2].g = 1.0f;
-   vertices[rsx->vert_idx+2].b = 1.0f;
-   vertices[rsx->vert_idx+2].a = 1.0f;
-
-   vertices[rsx->vert_idx+3].x = 1.0f;
-   vertices[rsx->vert_idx+3].y = 1.0f;
-   vertices[rsx->vert_idx+3].u = 1.0f;
-   vertices[rsx->vert_idx+3].v = 0.0f;
-   vertices[rsx->vert_idx+3].r = 1.0f;
-   vertices[rsx->vert_idx+3].g = 1.0f;
-   vertices[rsx->vert_idx+3].b = 1.0f;
-   vertices[rsx->vert_idx+3].a = 1.0f;
-
-   rsxAddressToOffset(&vertices[rsx->vert_idx].x, &rsx->pos_offset[RSX_SHADER_MENU]);
-   rsxAddressToOffset(&vertices[rsx->vert_idx].u, &rsx->uv_offset[RSX_SHADER_MENU]);
-   rsxAddressToOffset(&vertices[rsx->vert_idx].r, &rsx->col_offset[RSX_SHADER_MENU]);
-   rsx->vert_idx               = end_vert_idx;
+   rsxAddressToOffset(&vertices[0].x, &rsx->pos_offset[RSX_SHADER_MENU]);
+   rsxAddressToOffset(&vertices[0].u, &rsx->uv_offset[RSX_SHADER_MENU]);
+   rsxAddressToOffset(&vertices[0].r, &rsx->col_offset[RSX_SHADER_MENU]);
 
    rsxBindVertexArrayAttrib(rsx->context, rsx->pos_index[RSX_SHADER_MENU]->index, 0,
          rsx->pos_offset[RSX_SHADER_MENU], sizeof(rsx_vertex_t), 2, GCM_VERTEX_DATA_TYPE_F32, GCM_LOCATION_RSX);
@@ -2335,6 +2383,300 @@ static void rsx_draw_vertices(rsx_t* rsx)
 
    rsxClearSurface(rsx->context, GCM_CLEAR_Z);
    rsxDrawVertexArray(rsx->context, GCM_TYPE_TRIANGLE_STRIP, 0, 4);
+}
+
+#ifdef HAVE_CG
+static const char *const rsx_shader_uniform_names[RSX_UNIFORM_COUNT] = {
+   "IN.video_size",
+   "IN.texture_size",
+   "IN.output_size",
+   "IN.frame_count",
+   "IN.frame_direction"
+};
+
+/* The file, in memory aligned as the program structures want it */
+static void *rsx_shader_read(const char *path)
+{
+   void *buf   = NULL;
+   void *data  = NULL;
+   int64_t len = 0;
+
+   if (!filestream_read_file(path, &buf, &len) || len <= 0)
+   {
+      free(buf);
+      RARCH_ERR("[RSX] Could not read \"%s\".\n", path);
+      return NULL;
+   }
+   if ((data = memalign(128, (size_t)len)))
+      memcpy(data, buf, (size_t)len);
+   free(buf);
+   return data;
+}
+
+static rsxProgramAttrib *rsx_shader_attrib(rsxVertexProgram *vpo,
+      const char *const *names)
+{
+   for (; *names; names++)
+   {
+      rsxProgramAttrib *attrib = rsxVertexProgramGetAttrib(vpo, *names);
+      if (attrib)
+         return attrib;
+   }
+   return NULL;
+}
+
+/* The texture unit of the one texture the pass reads, the frame:
+ * passes that read others (previous frames, LUTs) are not supported */
+static bool rsx_shader_sampler(rsxFragmentProgram *fpo, u32 *unit)
+{
+   unsigned i, samplers     = 0;
+   rsxProgramAttrib *attrib = rsxFragmentProgramGetAttribs(fpo);
+
+   for (i = 0; i < fpo->num_attr; i++)
+   {
+      if (     attrib[i].type < PARAM_SAMPLER1D
+            || attrib[i].type > PARAM_SAMPLERRECT)
+         continue;
+      if (!samplers++)
+         *unit = attrib[i].index;
+   }
+   return samplers == 1;
+}
+
+static void rsx_shader_pass_free(rsx_shader_pass_t *pass)
+{
+   if (!pass)
+      return;
+   if (pass->fp_buffer)
+      rsxFree(pass->fp_buffer);
+   free(pass->vpo);
+   free(pass->fpo);
+   free(pass);
+}
+
+static rsx_shader_pass_t *rsx_shader_pass_load(
+      const struct video_shader *preset,
+      const struct video_shader_pass *spec)
+{
+   static const char *const position_names[] =
+      { "position", "POSITION", "VertexCoord", NULL };
+   static const char *const texcoord_names[] =
+      { "texCoord", "texcoord", "TexCoord", "tex", NULL };
+   static const char *const color_names[]    =
+      { "color", "COLOR", NULL };
+   char path[PATH_MAX_LENGTH];
+   void *fp_ucode          = NULL;
+   u32 vp_size             = 0;
+   u32 fp_size             = 0;
+   unsigned i;
+   rsx_shader_pass_t *pass = (rsx_shader_pass_t*)
+      calloc(1, sizeof(*pass));
+
+   if (!pass)
+      return NULL;
+
+   strlcpy(path, spec->source.path, sizeof(path));
+   path_remove_extension(path);
+   strlcat(path, ".vpo", sizeof(path));
+   if (!(pass->vpo = (rsxVertexProgram*)rsx_shader_read(path)))
+      goto error;
+   path_remove_extension(path);
+   strlcat(path, ".fpo", sizeof(path));
+   if (!(pass->fpo = (rsxFragmentProgram*)rsx_shader_read(path)))
+      goto error;
+
+   rsxVertexProgramGetUCode(pass->vpo, &pass->vp_ucode, &vp_size);
+   rsxFragmentProgramGetUCode(pass->fpo, &fp_ucode, &fp_size);
+   if (!(pass->fp_buffer = (u32*)rsxMemalign(64, fp_size)))
+   {
+      RARCH_ERR("[RSX] No RSX memory for the shader.\n");
+      goto error;
+   }
+   memcpy(pass->fp_buffer, fp_ucode, fp_size);
+   rsxAddressToOffset(pass->fp_buffer, &pass->fp_offset);
+
+   if (!(pass->mvp = rsxVertexProgramGetConst(pass->vpo, "modelViewProj")))
+   {
+      RARCH_ERR("[RSX] \"%s\" has no modelViewProj.\n", spec->source.path);
+      goto error;
+   }
+   if (!rsx_shader_sampler(pass->fpo, &pass->tex_unit))
+   {
+      RARCH_ERR("[RSX] \"%s\" reads other textures than the frame: "
+            "not supported yet.\n", spec->source.path);
+      goto error;
+   }
+
+   for (i = 0; i < RSX_UNIFORM_COUNT; i++)
+   {
+      pass->vp_uniform[i] = rsxVertexProgramGetConst(pass->vpo,
+            rsx_shader_uniform_names[i]);
+      pass->fp_uniform[i] = rsxFragmentProgramGetConst(pass->fpo,
+            rsx_shader_uniform_names[i]);
+   }
+   for (i = 0; i < preset->num_parameters && i < GFX_MAX_PARAMETERS; i++)
+   {
+      pass->vp_param[i] = rsxVertexProgramGetConst(pass->vpo,
+            preset->parameters[i].id);
+      pass->fp_param[i] = rsxFragmentProgramGetConst(pass->fpo,
+            preset->parameters[i].id);
+   }
+   pass->position        = rsx_shader_attrib(pass->vpo, position_names);
+   pass->texcoord        = rsx_shader_attrib(pass->vpo, texcoord_names);
+   pass->color           = rsx_shader_attrib(pass->vpo, color_names);
+   pass->filter          = spec->filter;
+   pass->frame_count_mod = spec->frame_count_mod;
+   if (!(pass->wrap = rsx_wrap_type_to_enum(spec->wrap)))
+      pass->wrap         = GCM_TEXTURE_CLAMP_TO_EDGE;
+   return pass;
+
+error:
+   rsx_shader_pass_free(pass);
+   return NULL;
+}
+
+static void rsx_shader_preset_free(struct video_shader *preset)
+{
+   unsigned i;
+   if (!preset)
+      return;
+   for (i = 0; i < GFX_MAX_SHADERS; i++)
+   {
+      free(preset->pass[i].source.string.vertex);
+      free(preset->pass[i].source.string.fragment);
+   }
+   free(preset);
+}
+
+static void rsx_shader_free(rsx_t *rsx)
+{
+   if (rsx->shader_pass)
+   {
+      /* The RSX may still be running the fragment program */
+      rsx_finish(rsx->context);
+      rsx_shader_pass_free(rsx->shader_pass);
+      rsx->shader_pass = NULL;
+   }
+   rsx_shader_preset_free(rsx->shader_preset);
+   rsx->shader_preset = NULL;
+}
+
+/* The core frame through the preset's pass, onto the viewport */
+static void rsx_draw_shader(rsx_t *rsx, rsx_texture_t *texture)
+{
+   float values[RSX_UNIFORM_COUNT][4];
+   float param[4];
+   float mvp[16];
+   unsigned i, j;
+   u32 offset, filter;
+   rsx_shader_pass_t *pass     = rsx->shader_pass;
+   struct video_shader *preset = rsx->shader_preset;
+   gcmContextData *context     = rsx->context;
+   rsx_vertex_t *vertices      = rsx_frame_quad(rsx);
+   uint64_t frame_count        = rsx->frame_count;
+
+   if (pass->frame_count_mod)
+      frame_count %= pass->frame_count_mod;
+   memset(values, 0, sizeof(values));
+   memset(param,  0, sizeof(param));
+   values[RSX_UNIFORM_VIDEO_SIZE][0]      = texture->tex.width;
+   values[RSX_UNIFORM_VIDEO_SIZE][1]      = texture->tex.height;
+   values[RSX_UNIFORM_TEXTURE_SIZE][0]    = texture->tex.width;
+   values[RSX_UNIFORM_TEXTURE_SIZE][1]    = texture->tex.height;
+   values[RSX_UNIFORM_OUTPUT_SIZE][0]     = VIDEO_SCALE_W(rsx->vp.dims);
+   values[RSX_UNIFORM_OUTPUT_SIZE][1]     = VIDEO_SCALE_H(rsx->vp.dims);
+   values[RSX_UNIFORM_FRAME_COUNT][0]     = (float)frame_count;
+   values[RSX_UNIFORM_FRAME_DIRECTION][0] = 1.0f;
+
+   /* The stock programs take mul(position, modelViewProj), the
+    * presets' mul(modelViewProj, position): the transpose */
+   for (i = 0; i < 4; i++)
+      for (j = 0; j < 4; j++)
+         mvp[i * 4 + j] = rsx->mvp.data[j * 4 + i];
+
+   if (pass->position)
+   {
+      rsxAddressToOffset(&vertices[0].x, &offset);
+      rsxBindVertexArrayAttrib(context, pass->position->index, 0, offset,
+            sizeof(rsx_vertex_t), 2, GCM_VERTEX_DATA_TYPE_F32,
+            GCM_LOCATION_RSX);
+   }
+   if (pass->texcoord)
+   {
+      rsxAddressToOffset(&vertices[0].u, &offset);
+      rsxBindVertexArrayAttrib(context, pass->texcoord->index, 0, offset,
+            sizeof(rsx_vertex_t), 2, GCM_VERTEX_DATA_TYPE_F32,
+            GCM_LOCATION_RSX);
+   }
+   if (pass->color)
+   {
+      rsxAddressToOffset(&vertices[0].r, &offset);
+      rsxBindVertexArrayAttrib(context, pass->color->index, 0, offset,
+            sizeof(rsx_vertex_t), 4, GCM_VERTEX_DATA_TYPE_F32,
+            GCM_LOCATION_RSX);
+   }
+
+   /* The preset's filter, or the video settings' */
+   if (pass->filter == RARCH_FILTER_LINEAR)
+      filter = GCM_TEXTURE_LINEAR;
+   else if (pass->filter == RARCH_FILTER_NEAREST)
+      filter = GCM_TEXTURE_NEAREST;
+   else
+      filter = texture->min_filter;
+   rsxInvalidateTextureCache(context, GCM_INVALIDATE_TEXTURE);
+   rsxLoadTexture(context, pass->tex_unit, &texture->tex);
+   rsxTextureControl(context, pass->tex_unit, GCM_TRUE, 0 << 8, 12 << 8,
+         GCM_TEXTURE_MAX_ANISO_1);
+   rsxTextureFilter(context, pass->tex_unit, 0, filter, filter,
+         GCM_TEXTURE_CONVOLUTION_QUINCUNX);
+   rsxTextureWrapMode(context, pass->tex_unit, pass->wrap, pass->wrap,
+         GCM_TEXTURE_CLAMP_TO_EDGE, 0, GCM_TEXTURE_ZFUNC_LESS, 0);
+
+   rsxLoadVertexProgram(context, pass->vpo, pass->vp_ucode);
+   rsxSetVertexProgramParameter(context, pass->vpo, pass->mvp, mvp);
+   for (i = 0; i < RSX_UNIFORM_COUNT; i++)
+   {
+      if (pass->vp_uniform[i])
+         rsxSetVertexProgramParameter(context, pass->vpo,
+               pass->vp_uniform[i], values[i]);
+      if (pass->fp_uniform[i])
+         rsxSetFragmentProgramParameter(context, pass->fpo,
+               pass->fp_uniform[i], values[i], pass->fp_offset,
+               GCM_LOCATION_RSX);
+   }
+   /* The parameters as the menu has them now */
+   for (i = 0; preset && i < preset->num_parameters
+         && i < GFX_MAX_PARAMETERS; i++)
+   {
+      param[0] = video_shader_param_get(&preset->parameters[i]);
+      if (pass->vp_param[i])
+         rsxSetVertexProgramParameter(context, pass->vpo,
+               pass->vp_param[i], param);
+      if (pass->fp_param[i])
+         rsxSetFragmentProgramParameter(context, pass->fpo,
+               pass->fp_param[i], param, pass->fp_offset,
+               GCM_LOCATION_RSX);
+   }
+   rsxLoadFragmentProgramLocation(context, pass->fpo, pass->fp_offset,
+         GCM_LOCATION_RSX);
+
+   rsxClearSurface(context, GCM_CLEAR_Z);
+   rsxDrawVertexArray(context, GCM_TYPE_TRIANGLE_STRIP, 0, 4);
+}
+#endif
+
+/* The core frame, through the shader preset if there is one */
+static void rsx_draw_frame(rsx_t *rsx, rsx_texture_t *texture)
+{
+#ifdef HAVE_CG
+   if (rsx->shader_pass)
+   {
+      rsx_draw_shader(rsx, texture);
+      return;
+   }
+#endif
+   rsx_set_texture(rsx, texture);
+   rsx_draw_vertices(rsx);
 }
 
 #if defined(HAVE_MENU)
@@ -2720,8 +3062,7 @@ static void rsx_draw_hw_image(rsx_t *gcm)
    texture.mag_filter    = texture.min_filter;
    texture.wrap_s        = GCM_TEXTURE_CLAMP_TO_EDGE;
    texture.wrap_t        = GCM_TEXTURE_CLAMP_TO_EDGE;
-   rsx_set_texture(gcm, &texture);
-   rsx_draw_vertices(gcm);
+   rsx_draw_frame(gcm, &texture);
 }
 
 static bool rsx_frame(void* data, const void* frame,
@@ -2765,6 +3106,9 @@ static bool rsx_frame(void* data, const void* frame,
    /* The core shares the FIFO and leaves its own state behind. */
    bool restore                     = gcm->hw_render && (frame || draw_cached);
 
+#ifdef HAVE_CG
+   gcm->frame_count                 = frame_count;
+#endif
    rsx_collect_retired_memory();
    rsx_fence_retired_memory(gcm->context);
    /* Core work overlaps the previous flip; UI buffers cannot. */
@@ -2848,8 +3192,7 @@ static bool rsx_frame(void* data, const void* frame,
          gcm->tex_index = next;
          /* TODO/FIXME - pipeline ID being used here is RSX_SHADER_MENU,
           * shouldn't this be RSX_SHADER_STOCK_BLEND instead? */
-         rsx_set_texture(gcm, &gcm->texture[gcm->tex_index]);
-         rsx_draw_vertices(gcm);
+         rsx_draw_frame(gcm, &gcm->texture[gcm->tex_index]);
          draw = true;
       }
    }
@@ -2864,8 +3207,7 @@ static bool rsx_frame(void* data, const void* frame,
       }
       else if (gcm->texture[gcm->tex_index].data)
       {
-         rsx_set_texture(gcm, &gcm->texture[gcm->tex_index]);
-         rsx_draw_vertices(gcm);
+         rsx_draw_frame(gcm, &gcm->texture[gcm->tex_index]);
          draw = true;
       }
       /* Nothing cached: a cleared buffer goes out only to put up or
@@ -2963,6 +3305,9 @@ static void rsx_free(void* data)
    rsx_finish(gcm->context);
    rsx_collect_retired_memory();
 
+#ifdef HAVE_CG
+   rsx_shader_free(gcm);
+#endif
 #ifdef HAVE_OVERLAY
    rsx_free_overlay(gcm);
 #endif
@@ -3196,6 +3541,15 @@ static uintptr_t rsx_load_texture_compressed(void *video_data,
    return (uintptr_t)texture;
 }
 
+#ifdef HAVE_CG
+/* The menu changes the parameters in place, drawn with next frame */
+static struct video_shader *rsx_get_current_shader(void *data)
+{
+   rsx_t *rsx = (rsx_t*)data;
+   return rsx ? rsx->shader_preset : NULL;
+}
+#endif
+
 static const video_poke_interface_t rsx_poke_interface = {
    rsx_get_flags,
    rsx_load_texture,
@@ -3215,7 +3569,11 @@ static const video_poke_interface_t rsx_poke_interface = {
    font_driver_render_msg,
    NULL, /* show_mouse */
    NULL, /* grab_mouse_toggle */
+#ifdef HAVE_CG
+   rsx_get_current_shader,
+#else
    NULL, /* get_current_shader */
+#endif
    NULL, /* get_current_software_framebuffer */
    rsx_get_hw_render_interface,
    NULL, /* set_hdr_menu_nits */
@@ -3244,7 +3602,60 @@ static void rsx_get_poke_interface(void* data,
       const video_poke_interface_t** iface) { *iface = &rsx_poke_interface; }
 
 static bool rsx_set_shader(void* data,
-      enum rarch_shader_type type, const char* path) { return false; }
+      enum rarch_shader_type type, const char* path)
+{
+#ifdef HAVE_CG
+   rsx_t *rsx                  = (rsx_t*)data;
+   struct video_shader *preset = NULL;
+   rsx_shader_pass_t *pass     = NULL;
+
+   if (!rsx)
+      return false;
+
+   /* Shaders off: the stock programs again */
+   if (type == RARCH_SHADER_NONE || !path || !*path)
+   {
+      rsx_shader_free(rsx);
+      return true;
+   }
+   if (type != RARCH_SHADER_CG)
+   {
+      RARCH_ERR("[RSX] Only Cg presets (.cgp) can be loaded.\n");
+      return false;
+   }
+
+   if (!(preset = (struct video_shader*)calloc(1, sizeof(*preset))))
+      return false;
+   if (!video_shader_load_preset_into_shader(path, preset))
+   {
+      RARCH_ERR("[RSX] Could not load the preset \"%s\".\n", path);
+      goto error;
+   }
+   if (preset->passes != 1 || preset->luts)
+   {
+      RARCH_ERR("[RSX] \"%s\" has %u passes and %u textures: only "
+            "one-pass presets without textures are supported for now.\n",
+            path, preset->passes, preset->luts);
+      goto error;
+   }
+   if (!(pass = rsx_shader_pass_load(preset, &preset->pass[0])))
+      goto error;
+
+   /* The one on screen goes once the new one is ready: a preset that
+    * does not load leaves it */
+   rsx_shader_free(rsx);
+   rsx->shader_pass        = pass;
+   rsx->shader_preset = preset;
+   RARCH_LOG("[RSX] Shader preset \"%s\" loaded.\n", path);
+   return true;
+
+error:
+   rsx_shader_preset_free(preset);
+   return false;
+#else
+   return false;
+#endif
+}
 
 #ifdef HAVE_GFX_WIDGETS
 static bool rsx_widgets_enabled(void *data)          { return true;  }
