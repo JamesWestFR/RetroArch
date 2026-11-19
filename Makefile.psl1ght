@@ -9,6 +9,16 @@ endif
 
 include $(PSL1GHT)/ppu_rules
 
+# PSL1GHT's librsx needs the rsxContextCallback fix with GCC 11 or later:
+# without it the RSX stops a few seconds after start ("Dead FIFO") and the
+# picture freezes. See pkg/psl1ght/toolchain/README.md.
+RSX_FUNCTION_MACROS := $(PSL1GHT)/ppu/include/rsx/rsx_function_macros.h
+ifneq ($(wildcard $(RSX_FUNCTION_MACROS)),)
+ifeq ($(shell grep -c noipa $(RSX_FUNCTION_MACROS)),0)
+$(error PSL1GHT lacks the librsx rsxContextCallback fix, so the picture would freeze a few seconds after start. Apply pkg/psl1ght/toolchain/librsx-context-callback-noipa.patch to PSL1GHT and reinstall it, see pkg/psl1ght/toolchain/README.md)
+endif
+endif
+
 include version.all
 
 DEBUG			= 0

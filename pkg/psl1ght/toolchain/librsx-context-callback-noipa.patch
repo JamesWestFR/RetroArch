@@ -1,0 +1,27 @@
+diff --git a/ppu/include/rsx/rsx_function_macros.h b/ppu/include/rsx/rsx_function_macros.h
+index bffc3a1..b4ffb51 100644
+--- a/ppu/include/rsx/rsx_function_macros.h
++++ b/ppu/include/rsx/rsx_function_macros.h
+@@ -12,7 +12,12 @@
+ 	#define RSX_FUNC_INTERNAL(func)		__rsx##func##Unsafe
+ 	#define RSX_CONTEXT_CURRENT_BEGIN(count) do {} while(0)	
+ #else
+-	s32 __attribute__((noinline)) rsxContextCallback(gcmContextData *context,u32 count)
++	/* The callback moves context->current/end to the next command buffer
++	 * segment and writes the jump there. noipa keeps GCC (>= 11: ipa-modref,
++	 * ipa-ra) from assuming this call leaves memory and registers alone:
++	 * otherwise callers keep the old current, write over that jump and
++	 * straddle the segment end, and the RSX later runs stale words. */
++	s32 __attribute__((noinline, noipa)) rsxContextCallback(gcmContextData *context,u32 count)
+ 	{
+ 		register s32 result asm("r3");
+ 		__asm__ __volatile__ (
+@@ -26,7 +31,7 @@
+             "addi	1,1,128\n"
+             : "+r"(result)
+             : "r"(context), "r"(count), "b"(context->callback)
+-            : "r31", "r0", "lr"
++            : "r31", "r0", "lr", "memory"
+ 		);
+ 		return result;
+ 	}
