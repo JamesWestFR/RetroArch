@@ -132,7 +132,11 @@ Pour reprendre vos fichiers de l'ancienne version, copiez-les par FTP :
 
 ### 9. Limites connues
 
-- **Pas de shaders** (CRT, scanlines, lissage…). Le pilote graphique de la PS3 ne les gère pas encore.
+- **Shaders limités.**
+  - 80 shaders Cg à une seule passe sont fournis (CRT, scanlines, xBR, lissage, couleurs des consoles portables…), dans *Menu rapide > Shaders*.
+  - Le lissage « bilinear » s'applique par défaut à tous les cores. Pour en changer, chargez un autre preset et enregistrez-le (global, pour le core ou pour le jeu), ou désactivez les shaders.
+  - Les presets à plusieurs passes ou à textures ne sont pas encore gérés.
+  - Les shaders les plus lourds (CRT élaborés) peuvent ralentir les jeux, surtout en 1080p.
 - **Pas de mise à jour en ligne** des cores, des assets ou des miniatures pour l'instant.
 - **Bases de données de jeux non fournies** : l'import automatique ne reconnaît pas les jeux. Passez par *Charger du contenu*.
 - **32X (PicoDrive)** : elle passe par un interpréteur. Sa vitesse sur console reste à vérifier.
@@ -287,7 +291,11 @@ To bring over files from the old version, copy them over FTP:
 
 ### 9. Known limitations
 
-- **No shaders** (CRT, scanlines, smoothing…). The PS3 graphics driver does not support them yet.
+- **Limited shaders.**
+  - 80 single-pass Cg shaders are included (CRT, scanlines, xBR, smoothing, handheld colors…), under *Quick Menu > Shaders*.
+  - Bilinear smoothing applies to every core by default. To change it, load another preset and save it (global, core or game preset), or turn shaders off.
+  - Presets with several passes or textures are not supported yet.
+  - The heaviest shaders (elaborate CRTs) can slow games down, especially at 1080p.
 - **No online updates** of cores, assets or thumbnails for now.
 - **Game databases not included**: automatic import does not recognize games. Use *Load Content*.
 - **32X (PicoDrive)**: it runs through an interpreter. Its speed on a real console is still to be checked.
