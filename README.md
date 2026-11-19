@@ -4,6 +4,8 @@
 > 🇫🇷 La branche `ps3/v2026` de ce fork est un portage **non officiel** de RetroArch pour PlayStation 3 (PSL1GHT, CFW et HEN). Elle n'est **ni affiliée à libretro ou à Sony, ni approuvée par eux**. C'est un projet de loisir, **gratuit et sans but lucratif** : il n'est pas vendu et n'a aucun but commercial. Le code reste sous licence GPLv3, comme RetroArch. Aucun jeu, BIOS ou clé n'est fourni. Merci de ne pas signaler à libretro les problèmes de cette version.
 >
 > 🇬🇧 The `ps3/v2026` branch of this fork is an **unofficial** port of RetroArch to PlayStation 3 (PSL1GHT, CFW and HEN). It is **not affiliated with or endorsed by** libretro or Sony. It is a hobby project, **free and non-commercial**: it is not sold and has no commercial purpose. The code stays under GPLv3, like RetroArch. No games, BIOS or keys are provided. Please do not report issues with this build to libretro.
+>
+> 📦 Installation, BIOS, dossiers / folders (FR, EN) : [pkg/psl1ght/INSTALL.md](pkg/psl1ght/INSTALL.md)
 
 [![Crowdin](https://badges.crowdin.net/retroarch/localized.svg)](https://crowdin.com/project/retroarch)
 
