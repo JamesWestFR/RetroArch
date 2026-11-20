@@ -10,7 +10,7 @@
 > **Version non officielle.** RetroArch PS3 v2026 est un portage **non officiel** de RetroArch pour PlayStation 3. Il n'est **ni affilié à libretro ou à Sony, ni approuvé par eux**. C'est un projet de loisir, **gratuit et sans but lucratif** : il n'est pas vendu et n'a aucun but commercial. Aucun jeu, BIOS ou clé n'est fourni. Merci de ne pas signaler à libretro les problèmes de cette version.
 
 > [!WARNING]
-> **État actuel : testé uniquement dans l'émulateur RPCS3.** Les 9 cores fonctionnent dans RPCS3. L'installation et le fonctionnement sur une vraie PS3, en CFW comme en HEN, **n'ont pas encore été vérifiés**.
+> **État actuel : testé uniquement dans l'émulateur RPCS3.** Les 9 premiers cores fonctionnent dans RPCS3 ; les 10 ajoutés ensuite (de Beetle PCE Fast à NeoCD) n'y ont pas encore été testés. L'installation et le fonctionnement sur une vraie PS3, en CFW comme en HEN, **n'ont pas encore été vérifiés**.
 
 ### 1. Contenu
 
@@ -25,8 +25,46 @@
 | VBA Next | Game Boy Advance | `.gba` |
 | FinalBurn Neo | Arcade (Neo-Geo, CPS1/2/3, etc.) | `.zip` `.7z` |
 | MAME 2003-Plus | Arcade | `.zip` |
+| Beetle PCE Fast | PC Engine, TurboGrafx-16, PC Engine CD | `.pce` `.cue` `.ccd` `.chd` `.toc` `.m3u` |
+| Stella 2014 | Atari 2600 | `.a26` `.bin` |
+| ProSystem | Atari 7800 | `.a78` `.bin` `.cdf` |
+| Handy | Atari Lynx | `.lnx` `.lyx` `.o` |
+| Beetle NeoPop | Neo Geo Pocket, Neo Geo Pocket Color | `.ngp` `.ngc` `.ngpc` `.npc` |
+| Beetle WonderSwan | WonderSwan, WonderSwan Color | `.ws` `.wsc` `.pc2` `.pcv2` |
+| blueMSX | MSX, MSX2, Spectravideo, ColecoVision, SG-1000 | `.rom` `.mx1` `.mx2` `.dsk` `.cas` `.col` `.sg` `.m3u` … |
+| Caprice32 | Amstrad CPC, GX4000 | `.dsk` `.sna` `.tap` `.cdt` `.cpr` `.zip` `.m3u` … |
+| Fuse | ZX Spectrum | `.tzx` `.tap` `.z80` `.sna` `.szx` `.dsk` `.trd` `.zip` … |
+| NeoCD | Neo Geo CD | `.cue` `.chd` |
 
 L'interface est fournie avec les menus Ozone (par défaut), XMB et RGUI.
+
+#### Versions des cores
+
+Chaque core est compilé depuis le dépôt libretro indiqué, au commit indiqué. La version est celle que le core annonce, et « — » signifie qu'il n'en annonce pas.
+
+| Core | Version | Commit compilé |
+|---|---|---|
+| FCEUmm | — | [`77468e5`](https://github.com/libretro/libretro-fceumm/commit/77468e568d9fe9c48d684ca911f1a3fe7259fdf7) (2026-11-16) |
+| Snes9x 2010 | v1.52.4 | [`82904a9`](https://github.com/libretro/snes9x2010/commit/82904a95e9bab2c3e63395e4b9ece8fdca8b785d) (2026-11-17) |
+| Genesis Plus GX | v1.7.4 | [`b9c2316`](https://github.com/libretro/Genesis-Plus-GX/commit/b9c2316441978d4015ba30e9a95d9b0e6f8ee981) (2026-11-09) |
+| PicoDrive | 1.99 | [`1890c29`](https://github.com/libretro/picodrive/commit/1890c2932234c9d30f4cd3851d02228baae8f09e) (2026-09-26) |
+| Gambatte | v0.5.0 | [`77f2567`](https://github.com/libretro/gambatte-libretro/commit/77f2567d718b8973d02caa2daa8dce4953faf811) (2026-10-30) |
+| gpSP | — | [`5819380`](https://github.com/libretro/gpsp/commit/5819380c2ffb0900219d700a382ee68c464ebb99) (2026-09-19) |
+| VBA Next | — | [`788192f`](https://github.com/libretro/vba-next/commit/788192f215ad0a1413f1625b40ebba3423fa0ade) (2026-08-31) |
+| FinalBurn Neo | v1.0.0.03 | [`9c6d05d00`](https://github.com/libretro/FBNeo/commit/9c6d05d00476de561ffb50928b9a2fed73142dea) (2026-11-19) |
+| MAME 2003-Plus | base MAME 0.78 | [`2a60eda`](https://github.com/libretro/mame2003-plus-libretro/commit/2a60eda71ae0fea543a76a43b5d58086a5485256) (2026-11-19) |
+| Beetle PCE Fast | v0.9.38.7 | [`2de1ce1`](https://github.com/libretro/beetle-pce-fast-libretro/commit/2de1ce1c3f237b161c126c54ba407990bb86d1e9) (2026-10-30) |
+| Stella 2014 | 3.9.3 | [`7d1361e`](https://github.com/libretro/stella2014-libretro/commit/7d1361e407e63f29e52892655069e5fb4096e691) (2026-09-04) |
+| ProSystem | 1.3e | [`8a88014`](https://github.com/libretro/prosystem-libretro/commit/8a88014287c7a01cd568067e5a557d0a2b2a051f) (2026-08-22) |
+| Handy | 0.95 | [`bc55d46`](https://github.com/libretro/libretro-handy/commit/bc55d462f0b2d6b073ea93dc552ebd73cec60fd1) (2026-04-20) |
+| Beetle NeoPop | v0.9.36.1 | [`a50d5ac`](https://github.com/libretro/beetle-ngp-libretro/commit/a50d5ac288a81f2104ddf43195a4efdd15c72227) (2026-06-14) |
+| Beetle WonderSwan | v0.9.35.1 | [`4b01295`](https://github.com/libretro/beetle-wswan-libretro/commit/4b01295838ea89e3f1355bbe4cb5cf98aa6108cd) (2026-07-31) |
+| blueMSX | — | [`e3086eb`](https://github.com/libretro/blueMSX-libretro/commit/e3086eb5d36d77fa11704cf53dc176686e70127d) (2026-08-23) |
+| Caprice32 | v4.2.0 | [`06ad0da`](https://github.com/libretro/libretro-cap32/commit/06ad0da5d003ab8f2359300ebce4cf31d4c55b6e) (2026-10-30) |
+| Fuse | 1.6.0 | [`e997e2b`](https://github.com/libretro/fuse-libretro/commit/e997e2bc32c888348f862f69f2c53babfedf7791) (2026-09-26) |
+| NeoCD | 2019 | [`b1e04c7`](https://github.com/libretro/neocd_libretro/commit/b1e04c738cb48a1dae0574b8877f6a116d270ca1) (2026-10-03) |
+
+RetroArch lui-même est la version 1.22.2 : la branche principale de libretro au commit `bb4b0d079d` (2026-11-18), plus les modifications PS3 du fork, branche `ps3/v2026`.
 
 ### 2. Quel fichier PKG choisir
 
@@ -74,10 +112,19 @@ Vous pouvez les mettre à deux endroits :
 
 Pour lancer un jeu, ouvrez *Menu principal > Charger du contenu* et naviguez jusqu'au fichier. Si plusieurs cores peuvent le lire, RetroArch vous demande lequel utiliser. Les jeux lancés apparaissent ensuite dans l'*Historique*.
 
+Pour avoir une liste de jeux par console, passez par *Importer du contenu* :
+- **Scanner un dossier** reconnaît les jeux grâce aux bases de données fournies dans le PKG (une par console des cores inclus). Il crée une liste par console.
+  - Seuls les jeux connus des bases sont ajoutés : dumps No-Intro ou Redump, romsets FinalBurn Neo ou MAME 2003-Plus.
+  - Le scan calcule l'empreinte de chaque fichier, ce qui peut prendre quelques minutes sur une grosse collection.
+- **Scan manuel** ajoute tous les fichiers d'un dossier, sans consulter les bases. Il sert pour les jeux modifiés (hacks, traductions), ou quand *Scanner un dossier* ne trouve rien. Vous choisissez le dossier, le nom de la liste, le core et les extensions, puis *Lancer l'analyse*.
+
 - **Arcade** : laissez les jeux en `.zip`, sans les décompresser ni les renommer.
   - **FinalBurn Neo** demande des romsets FinalBurn Neo récents.
   - **MAME 2003-Plus** demande des romsets « MAME 2003-Plus », basés sur MAME 0.78.
   - Les jeux d'une version de MAME différente ne fonctionneront pas forcément.
+  - **Fichiers DAT** : pour vérifier ou reconstruire vos romsets (ClrMamePro, RomVault…), prenez le DAT qui correspond exactement à la version du core :
+    - FinalBurn Neo : le [dossier `dats`](https://github.com/libretro/FBNeo/tree/9c6d05d00476de561ffb50928b9a2fed73142dea/dats) du commit compilé. Le fichier « Arcade only » couvre l'arcade, « Neogeo only » la Neo-Geo seule.
+    - MAME 2003-Plus : [`mame2003-plus.xml`](https://github.com/libretro/mame2003-plus-libretro/blob/2a60eda71ae0fea543a76a43b5d58086a5485256/metadata/mame2003-plus.xml).
 - **Consoles** : c'est avec des ROM décompressées que les tests ont été faits.
 
 #### Les BIOS
@@ -94,7 +141,12 @@ Ils vont dans **`/dev_hdd0/game/SSNE10001/USRDIR/system/`**, un dossier commun �
 | Gambatte | `gb_bios.bin`, `gbc_bios.bin` | Facultatif. |
 | FinalBurn Neo | `neogeo.zip` (et les autres BIOS d'arcade) | Neo-Geo. À mettre **dans le même dossier que les jeux**, ou dans `system/fbneo/`. |
 | MAME 2003-Plus | `neogeo.zip`, etc. | À mettre **dans le même dossier que les jeux**. |
-| Snes9x 2010 | — | Aucun. |
+| Beetle PCE Fast | `syscard3.pce` | **Obligatoire pour les jeux PC Engine CD.** Les cartes HuCard n'en ont pas besoin. |
+| NeoCD | dans `system/neocd/` : un BIOS Neo Geo CD (`neocd_f.rom`, `front-sp1.bin`, `top-sp1.bin`, `uni-bioscd.rom`…) **et** `000-lo.lo` (ou `ng-lo.rom`) | **Obligatoire.** |
+| blueMSX | les dossiers `Machines/` et `Databases/` | **Obligatoires.** Ils viennent du paquet complet de blueMSX (la version pour PC) : copiez-les tels quels dans `system/`. |
+| ProSystem | `7800 BIOS (U).rom` | Facultatif. |
+| Handy | `lynxboot.img` | Facultatif. |
+| Snes9x 2010, Stella 2014, Beetle NeoPop, Beetle WonderSwan, Caprice32, Fuse | — | Aucun. Caprice32 et Fuse ont les ROM de l'Amstrad et du Spectrum intégrées. |
 
 ### 6. Où sont vos réglages et sauvegardes
 
@@ -133,12 +185,13 @@ Pour reprendre vos fichiers de l'ancienne version, copiez-les par FTP :
 ### 9. Limites connues
 
 - **Shaders limités.**
-  - 80 shaders Cg à une seule passe sont fournis (CRT, scanlines, xBR, lissage, couleurs des consoles portables…), dans *Menu rapide > Shaders*.
+  - 81 shaders Cg à une seule passe sont fournis (CRT, scanlines, xBR, lissage, couleurs des consoles portables…), dans *Menu rapide > Shaders*.
   - Le lissage « bilinear » s'applique par défaut à tous les cores. Pour en changer, chargez un autre preset et enregistrez-le (global, pour le core ou pour le jeu), ou désactivez les shaders.
   - Les presets à plusieurs passes ou à textures ne sont pas encore gérés.
   - Les shaders les plus lourds (CRT élaborés) peuvent ralentir les jeux, surtout en 1080p.
+- **Ordinateurs (MSX, Amstrad CPC, ZX Spectrum)** : certains jeux demandent de taper des commandes au clavier. L'usage d'un clavier USB n'a pas encore été testé.
 - **Pas de mise à jour en ligne** des cores, des assets ou des miniatures pour l'instant.
-- **Bases de données de jeux non fournies** : l'import automatique ne reconnaît pas les jeux. Passez par *Charger du contenu*.
+- **Pas de jaquettes** : les listes de jeux s'affichent sans images, faute de mise à jour en ligne.
 - **32X (PicoDrive)** : elle passe par un interpréteur. Sa vitesse sur console reste à vérifier.
 - **Netplay et RetroAchievements** : pas encore testés.
 
@@ -169,7 +222,7 @@ Dans le XMB, sélectionnez *RetroArch v2026*, appuyez sur **Triangle**, puis cho
 > **Unofficial build.** RetroArch PS3 v2026 is an **unofficial** port of RetroArch to PlayStation 3. It is **not affiliated with or endorsed by** libretro or Sony. It is a hobby project, **free and non-commercial**: it is not sold and has no commercial purpose. No games, BIOS or keys are provided. Please do not report issues with this build to libretro.
 
 > [!WARNING]
-> **Current status: tested in the RPCS3 emulator only.** All 9 cores work in RPCS3. Installing and running it on a real PS3, CFW or HEN, **has not been verified yet**.
+> **Current status: tested in the RPCS3 emulator only.** The first 9 cores work in RPCS3; the 10 added afterwards (Beetle PCE Fast to NeoCD) have not been tested there yet. Installing and running it on a real PS3, CFW or HEN, **has not been verified yet**.
 
 ### 1. What is included
 
@@ -184,8 +237,46 @@ Dans le XMB, sélectionnez *RetroArch v2026*, appuyez sur **Triangle**, puis cho
 | VBA Next | Game Boy Advance | `.gba` |
 | FinalBurn Neo | Arcade (Neo-Geo, CPS1/2/3, etc.) | `.zip` `.7z` |
 | MAME 2003-Plus | Arcade | `.zip` |
+| Beetle PCE Fast | PC Engine, TurboGrafx-16, PC Engine CD | `.pce` `.cue` `.ccd` `.chd` `.toc` `.m3u` |
+| Stella 2014 | Atari 2600 | `.a26` `.bin` |
+| ProSystem | Atari 7800 | `.a78` `.bin` `.cdf` |
+| Handy | Atari Lynx | `.lnx` `.lyx` `.o` |
+| Beetle NeoPop | Neo Geo Pocket, Neo Geo Pocket Color | `.ngp` `.ngc` `.ngpc` `.npc` |
+| Beetle WonderSwan | WonderSwan, WonderSwan Color | `.ws` `.wsc` `.pc2` `.pcv2` |
+| blueMSX | MSX, MSX2, Spectravideo, ColecoVision, SG-1000 | `.rom` `.mx1` `.mx2` `.dsk` `.cas` `.col` `.sg` `.m3u` … |
+| Caprice32 | Amstrad CPC, GX4000 | `.dsk` `.sna` `.tap` `.cdt` `.cpr` `.zip` `.m3u` … |
+| Fuse | ZX Spectrum | `.tzx` `.tap` `.z80` `.sna` `.szx` `.dsk` `.trd` `.zip` … |
+| NeoCD | Neo Geo CD | `.cue` `.chd` |
 
 The menus included are Ozone (the default), XMB and RGUI.
+
+#### Core versions
+
+Each core is built from the libretro repository shown, at the commit shown. The version is the one the core reports; "—" means it reports none.
+
+| Core | Version | Built commit |
+|---|---|---|
+| FCEUmm | — | [`77468e5`](https://github.com/libretro/libretro-fceumm/commit/77468e568d9fe9c48d684ca911f1a3fe7259fdf7) (2026-11-16) |
+| Snes9x 2010 | v1.52.4 | [`82904a9`](https://github.com/libretro/snes9x2010/commit/82904a95e9bab2c3e63395e4b9ece8fdca8b785d) (2026-11-17) |
+| Genesis Plus GX | v1.7.4 | [`b9c2316`](https://github.com/libretro/Genesis-Plus-GX/commit/b9c2316441978d4015ba30e9a95d9b0e6f8ee981) (2026-11-09) |
+| PicoDrive | 1.99 | [`1890c29`](https://github.com/libretro/picodrive/commit/1890c2932234c9d30f4cd3851d02228baae8f09e) (2026-09-26) |
+| Gambatte | v0.5.0 | [`77f2567`](https://github.com/libretro/gambatte-libretro/commit/77f2567d718b8973d02caa2daa8dce4953faf811) (2026-10-30) |
+| gpSP | — | [`5819380`](https://github.com/libretro/gpsp/commit/5819380c2ffb0900219d700a382ee68c464ebb99) (2026-09-19) |
+| VBA Next | — | [`788192f`](https://github.com/libretro/vba-next/commit/788192f215ad0a1413f1625b40ebba3423fa0ade) (2026-08-31) |
+| FinalBurn Neo | v1.0.0.03 | [`9c6d05d00`](https://github.com/libretro/FBNeo/commit/9c6d05d00476de561ffb50928b9a2fed73142dea) (2026-11-19) |
+| MAME 2003-Plus | MAME 0.78 based | [`2a60eda`](https://github.com/libretro/mame2003-plus-libretro/commit/2a60eda71ae0fea543a76a43b5d58086a5485256) (2026-11-19) |
+| Beetle PCE Fast | v0.9.38.7 | [`2de1ce1`](https://github.com/libretro/beetle-pce-fast-libretro/commit/2de1ce1c3f237b161c126c54ba407990bb86d1e9) (2026-10-30) |
+| Stella 2014 | 3.9.3 | [`7d1361e`](https://github.com/libretro/stella2014-libretro/commit/7d1361e407e63f29e52892655069e5fb4096e691) (2026-09-04) |
+| ProSystem | 1.3e | [`8a88014`](https://github.com/libretro/prosystem-libretro/commit/8a88014287c7a01cd568067e5a557d0a2b2a051f) (2026-08-22) |
+| Handy | 0.95 | [`bc55d46`](https://github.com/libretro/libretro-handy/commit/bc55d462f0b2d6b073ea93dc552ebd73cec60fd1) (2026-04-20) |
+| Beetle NeoPop | v0.9.36.1 | [`a50d5ac`](https://github.com/libretro/beetle-ngp-libretro/commit/a50d5ac288a81f2104ddf43195a4efdd15c72227) (2026-06-14) |
+| Beetle WonderSwan | v0.9.35.1 | [`4b01295`](https://github.com/libretro/beetle-wswan-libretro/commit/4b01295838ea89e3f1355bbe4cb5cf98aa6108cd) (2026-07-31) |
+| blueMSX | — | [`e3086eb`](https://github.com/libretro/blueMSX-libretro/commit/e3086eb5d36d77fa11704cf53dc176686e70127d) (2026-08-23) |
+| Caprice32 | v4.2.0 | [`06ad0da`](https://github.com/libretro/libretro-cap32/commit/06ad0da5d003ab8f2359300ebce4cf31d4c55b6e) (2026-10-30) |
+| Fuse | 1.6.0 | [`e997e2b`](https://github.com/libretro/fuse-libretro/commit/e997e2bc32c888348f862f69f2c53babfedf7791) (2026-09-26) |
+| NeoCD | 2019 | [`b1e04c7`](https://github.com/libretro/neocd_libretro/commit/b1e04c738cb48a1dae0574b8877f6a116d270ca1) (2026-10-03) |
+
+RetroArch itself is version 1.22.2: the libretro main branch at commit `bb4b0d079d` (2026-11-18), plus the fork's PS3 changes, branch `ps3/v2026`.
 
 ### 2. Which PKG file to use
 
@@ -233,10 +324,19 @@ You can put them in two places:
 
 To start a game, open *Main Menu > Load Content* and browse to the file. If several cores can run it, RetroArch asks which one to use. Games you start then show up in *History*.
 
+To get a game list for each console, use *Import Content*:
+- **Scan Directory** recognizes games using the databases included in the PKG (one per console covered by the included cores). It creates one list per console.
+  - Only games the databases know are added: No-Intro or Redump dumps, FinalBurn Neo or MAME 2003-Plus romsets.
+  - The scan computes a checksum for each file, which can take a few minutes on a large collection.
+- **Manual Scan** adds every file in a folder without looking at the databases. Use it for modified games (hacks, translations), or when *Scan Directory* finds nothing. Choose the folder, the list name, the core and the extensions, then *Start Scan*.
+
 - **Arcade**: keep games as `.zip` files, without unzipping or renaming them.
   - **FinalBurn Neo** needs current FinalBurn Neo romsets.
   - **MAME 2003-Plus** needs "MAME 2003-Plus" romsets, which are based on MAME 0.78.
   - Games from another MAME version may not work.
+  - **DAT files**: to check or rebuild your romsets (ClrMamePro, RomVault…), use the DAT that matches the core version exactly:
+    - FinalBurn Neo: the [`dats` folder](https://github.com/libretro/FBNeo/tree/9c6d05d00476de561ffb50928b9a2fed73142dea/dats) of the built commit. "Arcade only" covers the arcade games, "Neogeo only" the Neo-Geo alone.
+    - MAME 2003-Plus: [`mame2003-plus.xml`](https://github.com/libretro/mame2003-plus-libretro/blob/2a60eda71ae0fea543a76a43b5d58086a5485256/metadata/mame2003-plus.xml).
 - **Consoles**: the tests were done with uncompressed ROMs.
 
 #### BIOS files
@@ -253,7 +353,12 @@ They go in **`/dev_hdd0/game/SSNE10001/USRDIR/system/`**, a folder shared by all
 | Gambatte | `gb_bios.bin`, `gbc_bios.bin` | Optional. |
 | FinalBurn Neo | `neogeo.zip` (and other arcade BIOS files) | Neo-Geo. Put it **in the same folder as the games**, or in `system/fbneo/`. |
 | MAME 2003-Plus | `neogeo.zip`, etc. | Put them **in the same folder as the games**. |
-| Snes9x 2010 | — | None. |
+| Beetle PCE Fast | `syscard3.pce` | **Required for PC Engine CD games.** HuCards do not need it. |
+| NeoCD | in `system/neocd/`: a Neo Geo CD BIOS (`neocd_f.rom`, `front-sp1.bin`, `top-sp1.bin`, `uni-bioscd.rom`…) **and** `000-lo.lo` (or `ng-lo.rom`) | **Required.** |
+| blueMSX | the `Machines/` and `Databases/` folders | **Required.** They come from the full blueMSX package (the PC version): copy them as they are into `system/`. |
+| ProSystem | `7800 BIOS (U).rom` | Optional. |
+| Handy | `lynxboot.img` | Optional. |
+| Snes9x 2010, Stella 2014, Beetle NeoPop, Beetle WonderSwan, Caprice32, Fuse | — | None. Caprice32 and Fuse have the Amstrad and Spectrum ROMs built in. |
 
 ### 6. Where your settings and saves are
 
@@ -292,12 +397,13 @@ To bring over files from the old version, copy them over FTP:
 ### 9. Known limitations
 
 - **Limited shaders.**
-  - 80 single-pass Cg shaders are included (CRT, scanlines, xBR, smoothing, handheld colors…), under *Quick Menu > Shaders*.
+  - 81 single-pass Cg shaders are included (CRT, scanlines, xBR, smoothing, handheld colors…), under *Quick Menu > Shaders*.
   - Bilinear smoothing applies to every core by default. To change it, load another preset and save it (global, core or game preset), or turn shaders off.
   - Presets with several passes or textures are not supported yet.
   - The heaviest shaders (elaborate CRTs) can slow games down, especially at 1080p.
+- **Computers (MSX, Amstrad CPC, ZX Spectrum)**: some games need commands typed on a keyboard. Using a USB keyboard has not been tested yet.
 - **No online updates** of cores, assets or thumbnails for now.
-- **Game databases not included**: automatic import does not recognize games. Use *Load Content*.
+- **No box art**: game lists show no images, since there is no online update yet.
 - **32X (PicoDrive)**: it runs through an interpreter. Its speed on a real console is still to be checked.
 - **Netplay and RetroAchievements**: not tested yet.
 
