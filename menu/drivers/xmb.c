@@ -576,6 +576,8 @@ typedef struct xmb_handle
 
    /* Favorites, History, Images, Music, Videos, user generated */
    bool is_playlist;
+   /* Playlist entries show a sublabel under the selected one */
+   bool playlist_sublabels;
    bool is_playlist_tab;
    bool is_playlist_information;
    bool is_db_manager_list;
@@ -674,6 +676,11 @@ static INLINE float xmb_item_y(const xmb_handle_t *xmb,
    }
    else if (i == (int)current)
       return icon_spacing_vertical    * xmb->active_item_factor;
+
+   /* The room under the selected entry is for its sublabel: without
+    * one, the next entry follows as the rest of the list does */
+   if (xmb->is_playlist && !xmb->playlist_sublabels)
+      return icon_spacing_vertical    * (i - (int)current + xmb->active_item_factor);
 
    return icon_spacing_vertical       * (i - (int)current + xmb->under_item_offset);
 }
@@ -4258,6 +4265,8 @@ static void xmb_populate_entries(void *data,
 
    xmb->show_playlist_tabs            = settings->bools.menu_content_show_playlist_tabs;
    xmb->show_horizontal_list          = settings->bools.menu_xmb_show_horizontal_list;
+   xmb->playlist_sublabels            = settings->bools.menu_show_sublabels
+                                     && settings->bools.playlist_show_sublabels;
 
    xmb->skip_thumbnail_reset          = false;
    if (xmb->is_quick_menu && depth < xmb->old_depth)
