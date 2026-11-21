@@ -665,23 +665,22 @@ static INLINE float xmb_item_y(const xmb_handle_t *xmb,
       int i, size_t current)
 {
    float icon_spacing_vertical = xmb->icon_spacing_vertical;
+   /* Playlist entries without a sublabel need no room for one under
+    * the selected entry, nor above it once the category row is gone:
+    * the list then keeps the same spacing all along */
+   bool even_spacing           = xmb->is_playlist && !xmb->playlist_sublabels;
 
    if (i < (int)current)
    {
-      if (!xmb->show_horizontal_list)
-         return icon_spacing_vertical * (i - (int)current + xmb->above_subitem_offset);
-      if (xmb->depth > 1)
-         return icon_spacing_vertical * (i - (int)current + xmb->above_subitem_offset);
+      if (!xmb->show_horizontal_list || xmb->depth > 1)
+         return icon_spacing_vertical * (i - (int)current + (even_spacing
+               ? xmb->active_item_factor : xmb->above_subitem_offset));
       return icon_spacing_vertical    * (i - (int)current + xmb->above_item_offset);
    }
    else if (i == (int)current)
       return icon_spacing_vertical    * xmb->active_item_factor;
-
-   /* The room under the selected entry is for its sublabel: without
-    * one, the next entry follows as the rest of the list does */
-   if (xmb->is_playlist && !xmb->playlist_sublabels)
+   else if (even_spacing)
       return icon_spacing_vertical    * (i - (int)current + xmb->active_item_factor);
-
    return icon_spacing_vertical       * (i - (int)current + xmb->under_item_offset);
 }
 
