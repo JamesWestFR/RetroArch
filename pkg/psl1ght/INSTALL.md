@@ -100,7 +100,7 @@ Les noms des menus peuvent varier selon le CFW et la version de HEN.
 - La manette DualShock 3 est configurée automatiquement.
 - Pour revenir au menu pendant une partie, appuyez **en même temps sur L3 et R3** (les deux sticks enfoncés).
 - Par défaut, les jeux s'affichent au format d'image d'origine du système émulé (4:3 pour la plupart des consoles).
-- **Quittez par *Menu principal > Quitter RetroArch*.** C'est ce qui enregistre vos réglages.
+- **Quittez par *Menu principal > Quitter*.** C'est ce qui enregistre vos réglages.
 
 ### 5. Où mettre les jeux et les BIOS
 
@@ -113,10 +113,10 @@ Vous pouvez les mettre à deux endroits :
 Pour lancer un jeu, ouvrez *Menu principal > Charger du contenu* et naviguez jusqu'au fichier. Si plusieurs cores peuvent le lire, RetroArch vous demande lequel utiliser. Les jeux lancés apparaissent ensuite dans l'*Historique*.
 
 Pour avoir une liste de jeux par console, passez par *Importer du contenu* :
-- **Scanner un dossier** reconnaît les jeux grâce aux bases de données fournies dans le PKG (une par console des cores inclus). Il crée une liste par console.
+- **Analyser un dossier** reconnaît les jeux grâce aux bases de données fournies dans le PKG (une par console des cores inclus). Il crée une liste par console.
   - Seuls les jeux connus des bases sont ajoutés : dumps No-Intro ou Redump, romsets FinalBurn Neo ou MAME 2003-Plus.
   - Le scan calcule l'empreinte de chaque fichier, ce qui peut prendre quelques minutes sur une grosse collection.
-- **Scan manuel** ajoute tous les fichiers d'un dossier, sans consulter les bases. Il sert pour les jeux modifiés (hacks, traductions), ou quand *Scanner un dossier* ne trouve rien. Vous choisissez le dossier, le nom de la liste, le core et les extensions, puis *Lancer l'analyse*.
+- **Analyse de contenu** ajoute tous les fichiers d'un dossier, sans consulter les bases. Elle sert pour les jeux modifiés (hacks, traductions), ou quand *Analyser un dossier* ne trouve rien. Vous choisissez le dossier (*Emplacement du contenu*), le nom de la liste (*Liste de lecture cible*), le core (*Cœur par défaut*) et les extensions (*Extensions de fichiers*), puis *Lancer l'analyse*.
 
 - **Arcade** : laissez les jeux en `.zip`, sans les décompresser ni les renommer.
   - **FinalBurn Neo** demande des romsets FinalBurn Neo récents.
@@ -179,7 +179,7 @@ Pour reprendre vos fichiers de l'ancienne version, copiez-les par FTP :
 - **Installation** : *File > Install Packages*, puis l'un des deux PKG.
 - **Jeux** : RetroArch ne voit pas les disques de Windows. Mettez vos jeux dans le dossier `dev_usb000` de RPCS3, par exemple `<dossier de RPCS3>\dev_usb000\ROMS\NES\`. RetroArch les trouve dans `/dev_usb000/ROMS/NES/`.
 - **BIOS** : `<dossier de RPCS3>\dev_hdd0\game\SSNE10001\USRDIR\system\`.
-- **Pour quitter** : utilisez *Quitter RetroArch* dans le menu de RetroArch. Le bouton *Stop* de RPCS3 coupe tout sans enregistrer les réglages.
+- **Pour quitter** : utilisez *Menu principal > Quitter* dans RetroArch. Le bouton *Stop* de RPCS3 coupe tout sans enregistrer les réglages.
 - **Vitesse** : elle dépend de votre PC et ne reflète pas celle d'une vraie PS3.
 
 ### 9. Limites connues
@@ -198,7 +198,7 @@ Pour reprendre vos fichiers de l'ancienne version, copiez-les par FTP :
 ### 10. En cas de problème
 
 Pour obtenir un journal détaillé :
-1. Dans *Paramètres > Journalisation*, activez la verbosité et l'enregistrement du journal dans un fichier.
+1. Dans *Réglages > Journalisation*, activez *Verbosité de la journalisation* et *Journaliser vers un fichier*.
 2. Reproduisez le problème.
 3. Récupérez `/dev_hdd0/home/<numéro>/retroarch/retroarch-log.txt` par FTP.
 
@@ -312,7 +312,7 @@ Menu names may differ between CFWs and HEN versions.
 - The DualShock 3 controller is set up automatically.
 - To get back to the menu during a game, press **L3 and R3 together** (both sticks pushed in).
 - By default, games are shown in the original aspect ratio of the emulated system (4:3 for most consoles).
-- **Quit with *Main Menu > Quit RetroArch*.** That is what saves your settings.
+- **Quit with *Main Menu > Quit*.** That is what saves your settings.
 
 ### 5. Where to put games and BIOS files
 
@@ -328,7 +328,7 @@ To get a game list for each console, use *Import Content*:
 - **Scan Directory** recognizes games using the databases included in the PKG (one per console covered by the included cores). It creates one list per console.
   - Only games the databases know are added: No-Intro or Redump dumps, FinalBurn Neo or MAME 2003-Plus romsets.
   - The scan computes a checksum for each file, which can take a few minutes on a large collection.
-- **Manual Scan** adds every file in a folder without looking at the databases. Use it for modified games (hacks, translations), or when *Scan Directory* finds nothing. Choose the folder, the list name, the core and the extensions, then *Start Scan*.
+- **Content Scan** adds every file in a folder without looking at the databases. Use it for modified games (hacks, translations), or when *Scan Directory* finds nothing. Choose the folder (*Content Location*), the list name (*Target Playlist*), the core (*Default Core*) and the extensions (*File Extensions*), then *Start Scan*.
 
 - **Arcade**: keep games as `.zip` files, without unzipping or renaming them.
   - **FinalBurn Neo** needs current FinalBurn Neo romsets.
@@ -391,7 +391,7 @@ To bring over files from the old version, copy them over FTP:
 - **Installing**: *File > Install Packages*, then either PKG.
 - **Games**: RetroArch cannot see Windows drives. Put your games in RPCS3's `dev_usb000` folder, for example `<RPCS3 folder>\dev_usb000\ROMS\NES\`. RetroArch finds them in `/dev_usb000/ROMS/NES/`.
 - **BIOS files**: `<RPCS3 folder>\dev_hdd0\game\SSNE10001\USRDIR\system\`.
-- **To quit**: use *Quit RetroArch* in RetroArch's menu. RPCS3's *Stop* button cuts everything without saving the settings.
+- **To quit**: use *Main Menu > Quit* in RetroArch. RPCS3's *Stop* button cuts everything without saving the settings.
 - **Speed**: it depends on your PC and does not reflect a real PS3.
 
 ### 9. Known limitations
@@ -410,7 +410,7 @@ To bring over files from the old version, copy them over FTP:
 ### 10. Troubleshooting
 
 To get a detailed log:
-1. In *Settings > Logging*, turn on logging verbosity and logging to a file.
+1. In *Settings > Logging*, turn on *Logging Verbosity* and *Log to File*.
 2. Reproduce the problem.
 3. Get `/dev_hdd0/home/<number>/retroarch/retroarch-log.txt` over FTP.
 
