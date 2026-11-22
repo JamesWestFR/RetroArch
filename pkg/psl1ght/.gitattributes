@@ -1,0 +1,3 @@
+# Windows scripts for the USB drive: keep them byte for byte (UTF-8 with
+# BOM, CRLF), as Windows PowerShell 5.1 and cmd.exe need them
+usb/** -text

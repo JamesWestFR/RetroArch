@@ -1,0 +1,30 @@
+dossier;nom;base;core;extensions;depot;dat
+nes;Nintendo NES / Famicom;Nintendo - Nintendo Entertainment System;fceumm;nes|unif|unf|zip|7z;;
+fds;Famicom Disk System;Nintendo - Family Computer Disk System;fceumm;fds|zip|7z;;
+snes;Super Nintendo / Super Famicom;Nintendo - Super Nintendo Entertainment System;snes9x2010;smc|sfc|fig|swc|bsx|gd3|gd7|dx2|zip|7z;;
+gb;Game Boy;Nintendo - Game Boy;gambatte;gb|dmg|zip|7z;;
+gbc;Game Boy Color;Nintendo - Game Boy Color;gambatte;gbc|zip|7z;;
+gba;Game Boy Advance;Nintendo - Game Boy Advance;gpsp ou vba_next;gba|zip|7z;;
+mastersystem;Master System;Sega - Master System - Mark III;genesis_plus_gx;sms|zip|7z;;
+megadrive;Mega Drive / Genesis;Sega - Mega Drive - Genesis;genesis_plus_gx;md|gen|smd|bin|zip|7z;;
+megacd;Mega-CD / Sega CD;Sega - Mega-CD - Sega CD;genesis_plus_gx;cue|chd|iso|m3u;;
+sega32x;Sega 32X;Sega - 32X;picodrive;32x|zip|7z;;
+gamegear;Game Gear;Sega - Game Gear;genesis_plus_gx;gg|zip|7z;;
+sg1000;SG-1000;Sega - SG-1000;genesis_plus_gx;sg|zip|7z;;
+fbneo;Arcade (FinalBurn Neo);FBNeo - Arcade Games;fbneo;zip|7z;;metadat/fbneo-split/FBNeo - Arcade Games.dat
+mame;Arcade (MAME 2003-Plus);MAME 2003-Plus;mame2003_plus;zip;MAME;metadat/mame-nonmerged/MAME 2003-Plus.dat
+neogeocd;Neo Geo CD;SNK - Neo Geo CD;neocd;cue|chd;;
+pcengine;PC Engine / TurboGrafx-16;NEC - PC Engine - TurboGrafx 16;mednafen_pce_fast;pce|zip|7z;;
+pcenginecd;PC Engine CD;NEC - PC Engine CD - TurboGrafx-CD;mednafen_pce_fast;cue|ccd|chd|toc|m3u;;
+atari2600;Atari 2600;Atari - 2600;stella2014;a26|bin|zip|7z;;
+atari7800;Atari 7800;Atari - 7800;prosystem;a78|bin|zip|7z;;
+atarilynx;Atari Lynx;Atari - Lynx;handy;lnx|lyx|zip|7z;;
+ngp;Neo Geo Pocket;SNK - Neo Geo Pocket;mednafen_ngp;ngp|zip|7z;;
+ngpc;Neo Geo Pocket Color;SNK - Neo Geo Pocket Color;mednafen_ngp;ngc|ngpc|npc|zip|7z;;
+wonderswan;WonderSwan;Bandai - WonderSwan;mednafen_wswan;ws|zip|7z;;
+wonderswancolor;WonderSwan Color;Bandai - WonderSwan Color;mednafen_wswan;wsc|pc2|zip|7z;;
+msx;MSX;Microsoft - MSX;bluemsx;rom|ri|mx1|dsk|cas|zip|7z;;
+msx2;MSX2;Microsoft - MSX2;bluemsx;rom|mx2|dsk|cas|zip|7z;;
+colecovision;ColecoVision;Coleco - ColecoVision;bluemsx;col|rom|zip|7z;;
+amstradcpc;Amstrad CPC;Amstrad - CPC;cap32;dsk|sna|cdt|tap|voc|cpr|m3u|zip;;
+zxspectrum;ZX Spectrum;Sinclair - ZX Spectrum;fuse;tzx|tap|z80|rzx|scl|trd|dsk|sna|szx|zip;;
