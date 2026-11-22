@@ -298,6 +298,22 @@ static void frontend_ps3_get_env(int *argc, char *argv[],
       RARCH_WARN("[PS3] The current user's directory is unusable, "
             "using the shared one.\n");
 
+   /* A USB drive prepared on the PC takes over for as long as it is
+    * plugged in, the console's own configuration left untouched */
+   {
+      char usb_root[64];
+      if (ps3_usb_root_find(usb_root, sizeof(usb_root)))
+      {
+         if (ps3_usb_config_use(usb_root))
+            RARCH_LOG("[PS3] Prepared USB drive at %s: using %s.\n",
+                  usb_root, g_defaults.path_config);
+         else
+            RARCH_WARN("[PS3] Prepared USB drive at %s, but its "
+                  "configuration cannot be written: keeping the "
+                  "console's.\n", usb_root);
+      }
+   }
+
 #ifndef IS_SALAMANDER
    if (verbosity)
       verbosity_enable();

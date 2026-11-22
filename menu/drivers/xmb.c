@@ -576,6 +576,8 @@ typedef struct xmb_handle
 
    /* Favorites, History, Images, Music, Videos, user generated */
    bool is_playlist;
+   /* Playlist entries show a sublabel under the selected one */
+   bool playlist_sublabels;
    bool is_playlist_tab;
    bool is_playlist_information;
    bool is_db_manager_list;
@@ -663,18 +665,22 @@ static INLINE float xmb_item_y(const xmb_handle_t *xmb,
       int i, size_t current)
 {
    float icon_spacing_vertical = xmb->icon_spacing_vertical;
+   /* Playlist entries without a sublabel need no room for one under
+    * the selected entry, nor above it once the category row is gone:
+    * the list then keeps the same spacing all along */
+   bool even_spacing           = xmb->is_playlist && !xmb->playlist_sublabels;
 
    if (i < (int)current)
    {
-      if (!xmb->show_horizontal_list)
-         return icon_spacing_vertical * (i - (int)current + xmb->above_subitem_offset);
-      if (xmb->depth > 1)
-         return icon_spacing_vertical * (i - (int)current + xmb->above_subitem_offset);
+      if (!xmb->show_horizontal_list || xmb->depth > 1)
+         return icon_spacing_vertical * (i - (int)current + (even_spacing
+               ? xmb->active_item_factor : xmb->above_subitem_offset));
       return icon_spacing_vertical    * (i - (int)current + xmb->above_item_offset);
    }
    else if (i == (int)current)
       return icon_spacing_vertical    * xmb->active_item_factor;
-
+   else if (even_spacing)
+      return icon_spacing_vertical    * (i - (int)current + xmb->active_item_factor);
    return icon_spacing_vertical       * (i - (int)current + xmb->under_item_offset);
 }
 
@@ -4258,6 +4264,8 @@ static void xmb_populate_entries(void *data,
 
    xmb->show_playlist_tabs            = settings->bools.menu_content_show_playlist_tabs;
    xmb->show_horizontal_list          = settings->bools.menu_xmb_show_horizontal_list;
+   xmb->playlist_sublabels            = settings->bools.menu_show_sublabels
+                                     && settings->bools.playlist_show_sublabels;
 
    xmb->skip_thumbnail_reset          = false;
    if (xmb->is_quick_menu && depth < xmb->old_depth)
@@ -5505,6 +5513,62 @@ XMB_NOINLINE static void xmb_draw_item_sublabel(
    }
 }
 
+/* Playlists dim the other entries to 60% of their usual opacity
+ * (75% -> 45%), easing in step with the selection animation so that
+ * nothing jumps when the selection moves */
+#define XMB_PLAYLIST_PASSIVE_DIM 0.6f
+
+static INLINE float xmb_playlist_label_alpha(const xmb_handle_t *xmb,
+      float alpha)
+{
+   float span = xmb->items_active_alpha - xmb->items_passive_alpha;
+   float t    = (span > 0.0f)
+         ? (alpha - xmb->items_passive_alpha) / span
+         : 1.0f;
+
+   if (t < 0.0f)
+      t = 0.0f;
+   else if (t > 1.0f)
+      t = 1.0f;
+   return alpha * (XMB_PLAYLIST_PASSIVE_DIM
+         + (1.0f - XMB_PLAYLIST_PASSIVE_DIM) * t);
+}
+
+/* Playlists: a light band behind the selected entry, as wide as its
+ * label may run, as a selection bar */
+static void xmb_draw_selection_band(const xmb_draw_ctx_t *ctx,
+      float label_x, float label_y, float alpha)
+{
+   const xmb_handle_t *xmb = ctx->xmb;
+   float width             = (float)VIDEO_SCALE_W(ctx->video_dims);
+   float pad               = xmb->font_size * 0.5f;
+   float band_h            = xmb->icon_spacing_vertical * 0.8f;
+   /* Labels are drawn on their baseline: the glyphs sit mostly above */
+   float band_y            = label_y - xmb->font_size * 0.3f - band_h / 2.0f;
+   float band_x            = label_x - pad;
+   float band_w            = xmb->font_size * 0.5f * xmb->ticker_limit
+                           + 2.0f * pad;
+   float band_color[16];
+   int k;
+
+   if (band_x + band_w > width)
+      band_w = width - band_x;
+   if (band_w < 1.0f || alpha <= 0.0f)
+      return;
+
+   for (k = 0; k < 16; k += 4)
+   {
+      band_color[k    ] = 1.0f;
+      band_color[k + 1] = 1.0f;
+      band_color[k + 2] = 1.0f;
+      band_color[k + 3] = 0.2f * alpha;
+   }
+
+   gfx_display_draw_quad(ctx->p_disp, ctx->userdata, ctx->video_dims,
+         (int)band_x, (int)band_y, VIDEO_SCALE_PACK(band_w, band_h),
+         ctx->video_dims, band_color, NULL);
+}
+
 XMB_NOINLINE static int xmb_draw_item(
       const xmb_draw_ctx_t *ctx,
       size_t i,
@@ -5843,18 +5907,31 @@ XMB_NOINLINE static int xmb_draw_item(
    }
 
    /* Entry label */
-   xmb_draw_text(shadows_enable, xmb, video_info, tmp,
-         (float)ticker_x_offset
-               + node->x
-               + xmb->margins_screen_left
-               + xmb->icon_spacing_horizontal
-               - (!show_entry_icons ? xmb->icon_size : 0)
-               + xmb->margins_label_left,
-         xmb->margins_screen_top
-               + node->y
-               + label_offset,
-         1, node->label_alpha * xmb->alpha_list, TEXT_ALIGN_LEFT,
-         video_dims, xmb->font);
+   {
+      float label_x     = node->x
+                        + xmb->margins_screen_left
+                        + xmb->icon_spacing_horizontal
+                        - (!show_entry_icons ? xmb->icon_size : 0)
+                        + xmb->margins_label_left;
+      float label_y     = xmb->margins_screen_top
+                        + node->y
+                        + label_offset;
+      float label_alpha = node->label_alpha;
+
+      /* Playlists: make the selected entry stand out */
+      if (xmb->is_playlist)
+      {
+         if (i == current)
+            xmb_draw_selection_band(ctx, label_x, label_y,
+                  label_alpha * xmb->alpha_list);
+         label_alpha    = xmb_playlist_label_alpha(xmb, label_alpha);
+      }
+
+      xmb_draw_text(shadows_enable, xmb, video_info, tmp,
+            (float)ticker_x_offset + label_x, label_y,
+            1, label_alpha * xmb->alpha_list, TEXT_ALIGN_LEFT,
+            video_dims, xmb->font);
+   }
 
    /* Entry value */
    tmp[0]                       = '\0';

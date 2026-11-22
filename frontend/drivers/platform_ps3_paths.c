@@ -310,3 +310,99 @@ end:
    free(src);
    return ret;
 }
+
+#define PS3_USB_PORTS 8
+#define PS3_HOME_ROOT "/dev_hdd0/home"
+
+/* What makes a drive one prepared on the PC */
+static const char *const ps3_usb_required[] = { "roms", "bios", "thumbnails" };
+
+/* Below the drive's retroarch directory, and the settings they take */
+static const struct
+{
+   const char *name;
+   const char *setting;
+} ps3_usb_dirs[] = {
+   { "roms",       "rgui_browser_directory" },
+   { "bios",       "system_directory" },
+   { "thumbnails", "thumbnails_directory" },
+   { "playlists",  "playlist_directory" }
+};
+
+bool ps3_usb_root_find(char *root, size_t len)
+{
+   char dir[64];
+   unsigned port;
+   size_t i;
+
+   for (port = 0; port < PS3_USB_PORTS; port++)
+   {
+      snprintf(root, len, "/dev_usb%03u/retroarch", port);
+      for (i = 0; i < PS3_ARRAY_SIZE(ps3_usb_required); i++)
+      {
+         fill_pathname_join(dir, root, ps3_usb_required[i], sizeof(dir));
+         if (!path_is_directory(dir))
+            break;
+      }
+      if (i == PS3_ARRAY_SIZE(ps3_usb_required))
+         return true;
+   }
+   *root = '\0';
+   return false;
+}
+
+bool ps3_usb_config_use(const char *root)
+{
+   char path[PATH_MAX_LENGTH];
+   char dir[PATH_MAX_LENGTH];
+   config_file_t *config = NULL;
+   bool first_use        = false;
+   bool ret              = true;
+   size_t i;
+
+   fill_pathname_join(path, root, FILE_PATH_MAIN_CONFIG, sizeof(path));
+   if (path_is_valid(path))
+      config = config_file_new_from_path_to_string(path);
+   else
+   {
+      /* First use: a copy of the console's configuration */
+      first_use = true;
+      if (path_is_valid(g_defaults.path_config))
+         config = config_file_new_from_path_to_string(g_defaults.path_config);
+      if (!config)
+         config = config_file_new_alloc();
+   }
+   if (!config)
+      return false;
+
+   /* Personal data stays on the console, with whoever is signed in:
+    * the drive may have been used by another user, or console */
+   for (i = 0; i < PS3_ARRAY_SIZE(ps3_user_dirs); i++)
+      if (ps3_path_is_personal(config, ps3_user_dirs[i].setting, PS3_HOME_ROOT))
+         config_set_path(config, ps3_user_dirs[i].setting,
+               g_defaults.dirs[ps3_user_dirs[i].dir]);
+   for (i = 0; i < PS3_ARRAY_SIZE(ps3_user_files); i++)
+      if (ps3_path_is_personal(config, ps3_user_files[i], PS3_HOME_ROOT))
+         config_set_path(config, ps3_user_files[i], "");
+
+   /* The drive's own directories, at the port it is plugged in now */
+   for (i = 0; i < PS3_ARRAY_SIZE(ps3_usb_dirs); i++)
+   {
+      fill_pathname_join(dir, root, ps3_usb_dirs[i].name, sizeof(dir));
+      config_set_path(config, ps3_usb_dirs[i].setting, dir);
+   }
+   /* The only one RetroArch writes to, and not required to be there */
+   fill_pathname_join(dir, root, "playlists", sizeof(dir));
+   path_mkdir(dir);
+   /* Its playlists then follow it from one port, or console, to another */
+   config_set_string(config, "playlist_portable_paths", "true");
+
+   /* Written only when something changed: this runs at every boot */
+   if (first_use || (config->flags & CONF_FILE_FLG_MODIFIED))
+      ret = config_file_write(config, path, true);
+   config_file_free(config);
+
+   if (ret)
+      strlcpy(g_defaults.path_config, path, sizeof(g_defaults.path_config));
+   return ret;
+}
