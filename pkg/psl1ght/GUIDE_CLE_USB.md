@@ -494,7 +494,6 @@ Appuyez **en même temps sur L3 et R3** (les deux sticks enfoncés) pour ouvrir 
 | *Reprendre* | Revient au jeu |
 | *Réinitialiser* | Redémarre le jeu |
 | *Sauvegarde instantanée* / *Charger une sauvegarde instantanée* | Enregistre ou reprend la partie à cet instant précis |
-| *Ajouter aux favoris* | Ajoute le jeu à l'onglet *Favoris* |
 | *Options de cœur* | Réglages propres à l'émulateur |
 | *Shaders* | Effets d'image : écran CRT, lignes de balayage, lissage… |
 | *Fermer le contenu* | Quitte le jeu et revient aux listes |
@@ -505,7 +504,7 @@ Appuyez **en même temps sur L3 et R3** (les deux sticks enfoncés) pour ouvrir 
 
 N'éteignez pas la console et ne débranchez pas la clé pendant que RetroArch tourne.
 
-L'onglet *Historique* rassemble les derniers jeux lancés, et *Favoris* ceux que vous y avez ajoutés.
+Pour garder la page des listes simple, *Historique* (les derniers jeux lancés) et *Favoris* sont masqués. Pour les réafficher, activez *Afficher 'Historique'* et *Afficher 'Favoris'* dans *Réglages > Interface utilisateur > Visibilité des éléments du menu*. Le *Menu rapide* propose alors aussi *Ajouter aux favoris*.
 
 ---
 
@@ -556,7 +555,7 @@ Ces réglages se font sur la PS3, dans l'onglet *Réglages*. Faites-les **avec l
 | La seconde image | *Réglages > Interface utilisateur > Apparence > Miniature secondaire* | **Écran titre** |
 | L'écran d'arrivée | *Réglages > Interface utilisateur > Page de démarrage* | **Listes de lecture** : RetroArch s'ouvre directement sur les jeux |
 | Les lignes sous chaque jeu | *Réglages > Listes de lecture > Afficher les sous-descriptions dans les listes de lecture* | **Désactivé** : listes plus compactes |
-| Les entrées inutiles | *Réglages > Interface utilisateur > Visibilité des éléments du menu* | *Afficher 'Images'*, *Afficher 'Musique'*, *Afficher 'Jeu en réseau'*, *Afficher 'Charger un cœur'* et *Afficher 'Cœurs sans contenu'* sur **Désactivé** |
+| Les entrées inutiles | *Réglages > Interface utilisateur > Visibilité des éléments du menu* | *Afficher 'Historique'*, *Afficher 'Favoris'*, *Afficher 'Parcourir'*, *Afficher 'Images'*, *Afficher 'Musique'*, *Afficher 'Jeu en réseau'*, *Afficher 'Charger un cœur'* et *Afficher 'Cœurs sans contenu'* sur **Désactivé** |
 | La musique et les sons du menu | *Réglages > Audio > Sons du menu* | *Mixeur* et *Musique de fond* sur **Activé** |
 
 `Telecharger-Images` récupère par défaut la jaquette et l'écran titre, qui correspondent à ces réglages. Pour afficher des captures en jeu, téléchargez-les avec `-Types boxarts,snaps` (section 9.3), puis choisissez *Capture d'écran* comme miniature.

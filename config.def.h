@@ -2384,7 +2384,9 @@
  * per system (Systematic theme, shipped in the PKG), box art on the right
  * and the title screen as second image. Game lists stay compact (no
  * sublabels, no entry numbers), the menu plays its music and sounds, and
- * the entries a console player does not need are hidden. */
+ * the entries a console player does not need are hidden, History,
+ * Favorites and Explore included: the playlists page holds Import
+ * Content and the game lists only. */
 #if defined(__PSL1GHT__)
 #undef DEFAULT_XMB_ICON_THEME
 #define DEFAULT_XMB_ICON_THEME XMB_ICON_THEME_SYSTEMATIC
@@ -2400,6 +2402,14 @@
 #define DEFAULT_MENU_SHOW_LOAD_CORE false
 #undef DEFAULT_MENU_CONTENT_SHOW_CONTENTLESS_CORES
 #define DEFAULT_MENU_CONTENT_SHOW_CONTENTLESS_CORES MENU_CONTENTLESS_CORES_DISPLAY_NONE
+#undef DEFAULT_CONTENT_SHOW_HISTORY
+#define DEFAULT_CONTENT_SHOW_HISTORY false
+#undef DEFAULT_CONTENT_SHOW_FAVORITES
+#define DEFAULT_CONTENT_SHOW_FAVORITES false
+#ifdef DEFAULT_MENU_CONTENT_SHOW_EXPLORE
+#undef DEFAULT_MENU_CONTENT_SHOW_EXPLORE
+#define DEFAULT_MENU_CONTENT_SHOW_EXPLORE false
+#endif
 #ifdef DEFAULT_CONTENT_SHOW_IMAGES
 #undef DEFAULT_CONTENT_SHOW_IMAGES
 #define DEFAULT_CONTENT_SHOW_IMAGES false
