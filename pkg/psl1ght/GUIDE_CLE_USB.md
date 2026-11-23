@@ -90,7 +90,7 @@ Prenez-les tous sur la page de la même version.
 | `RetroArch_PS3_v2026.gnpdrm.pkg` | **HEN et CFW**. C'est celui à prendre en cas de doute. |
 | `RetroArch_PS3_v2026.pkg` | CFW uniquement. |
 
-**Les scripts de la clé USB**, 8 fichiers à garder **ensemble dans le même dossier** :
+**Les scripts de la clé USB**, dans le fichier **`RetroArch_PS3_v2026_scripts_cle_USB.zip`**. Il contient 8 fichiers à garder **ensemble dans le même dossier** :
 
 | Fichier | Rôle |
 |---|---|
@@ -209,7 +209,7 @@ Le fichier PKG peut maintenant être supprimé de la clé.
 ## 5. Préparer la clé : Preparer-Cle-USB (PC)
 
 ### 5.1 Débloquer et extraire les scripts
-Windows se méfie des fichiers venus d'Internet. Si les scripts sont arrivés dans un fichier `.zip` :
+Les scripts sont dans le fichier `RetroArch_PS3_v2026_scripts_cle_USB.zip`. Windows se méfie des fichiers venus d'Internet : débloquez-le avant de l'extraire.
 1. Faites un clic droit sur le `.zip`, puis *Propriétés*.
 2. En bas de l'onglet *Général*, cochez **Débloquer** (s'il est présent), puis cliquez sur *OK*.
 3. Faites un clic droit sur le `.zip`, puis *Extraire tout…*, et choisissez un dossier du PC, par exemple `Documents\RetroArch-PS3`.

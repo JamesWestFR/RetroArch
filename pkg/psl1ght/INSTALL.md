@@ -73,6 +73,8 @@ RetroArch lui-même est la version 1.22.2 : la branche principale de libretro au
 | `RetroArch_PS3_v2026.gnpdrm.pkg` | **HEN et CFW** (format « retail »). C'est celui à prendre en cas de doute. |
 | `RetroArch_PS3_v2026.pkg` | CFW uniquement (format « debug »). |
 
+À côté des PKG, `RetroArch_PS3_v2026_scripts_cle_USB.zip` contient des scripts pour Windows. Ils préparent une clé USB avec vos jeux, leurs listes et leurs jaquettes. Le mode d'emploi est dans le [guide de la clé USB](GUIDE_CLE_USB.md).
+
 Le jeu s'installe sous l'identifiant `SSNE10001`. Dans le XMB, il apparaît sous le nom **« RetroArch v2026 (non officiel) »** sur une console en français, et **« RetroArch v2026 (unofficial) »** dans les autres langues.
 
 ### 3. Installation
@@ -287,6 +289,8 @@ RetroArch itself is version 1.22.2: the libretro main branch at commit `bb4b0d07
 |---|---|
 | `RetroArch_PS3_v2026.gnpdrm.pkg` | **HEN and CFW** ("retail" format). Use this one if in doubt. |
 | `RetroArch_PS3_v2026.pkg` | CFW only ("debug" format). |
+
+Next to the PKGs, `RetroArch_PS3_v2026_scripts_cle_USB.zip` holds scripts for Windows. They prepare a USB drive with your games, their lists and their box art. The instructions are in the [USB drive guide](GUIDE_CLE_USB.md), in French only for now.
 
 It installs under the title ID `SSNE10001`. In the XMB it shows as **"RetroArch v2026 (unofficial)"**, or **"RetroArch v2026 (non officiel)"** on a French console.
 
