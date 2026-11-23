@@ -195,8 +195,9 @@ RetroArch apparaît dans la colonne *Jeu* sous le nom **« RetroArch v2026 (non 
 ### 4.3 Premier lancement
 1. Avec HEN, vérifiez qu'il est activé.
 2. Lancez *RetroArch v2026*.
-3. Le menu s'affiche dans la langue de la console, et la manette fonctionne tout de suite.
-4. Pour cette première fois, il n'y a rien à faire. Quittez par ***Menu principal > Quitter***.
+3. Le menu s'affiche dans la langue de la console, avec une musique de fond, et la manette fonctionne tout de suite.
+4. RetroArch s'ouvre sur la page *Listes de lecture*, encore sans jeux. Appuyez sur la touche de retour (**Rond** en Europe) pour atteindre le *Menu principal*.
+5. Pour cette première fois, il n'y a rien à faire. Quittez par ***Menu principal > Quitter***.
 
 > [!TIP]
 > **Prenez l'habitude de quitter RetroArch par *Menu principal > Quitter*.** C'est à ce moment qu'il enregistre ses réglages. Si vous éteignez la console ou revenez au menu de la PS3 autrement, les réglages changés depuis le lancement sont perdus.
@@ -474,8 +475,8 @@ RetroArch affiche deux images par jeu au plus. Choisir lesquelles se fait sur la
 4. **La première fois avec cette clé**, RetroArch crée `retroarch\retroarch.cfg` sur la clé. C'est une copie des réglages de la console, qu'il oriente vers les dossiers de la clé. Il n'y a rien à faire.
 
 ### 10.2 Trouver et lancer un jeu
-Les listes de jeux apparaissent, une par console, sous le nom des collections libretro, par exemple « Nintendo - Super Nintendo Entertainment System ».
-- **Menu XMB** (icônes en ligne, comme le menu de la PS3) : chaque console est une icône de la rangée horizontale. Les jeux défilent verticalement.
+RetroArch s'ouvre sur la page *Listes de lecture* : une liste par console, sous le nom des collections libretro, par exemple « Nintendo - Super Nintendo Entertainment System ».
+- **Menu XMB**, le menu d'origine (icônes en ligne, comme le menu de la PS3) : chaque console est aussi une icône de la rangée horizontale. Les jeux défilent verticalement.
 - **Menu Ozone** (colonne à gauche) : les consoles sont dans la colonne de gauche, et les jeux s'affichent à droite.
 
 Pour lancer un jeu :
@@ -543,9 +544,11 @@ Le `<numéro>` de l'utilisateur PS3 a 8 chiffres : `00000001` pour le premier ut
 
 ## 12. Régler l'affichage des jeux
 
+**RetroArch est livré avec les valeurs de ce tableau : après une nouvelle installation, il n'y a rien à régler.** Le tableau sert à changer l'allure du menu, ou à retrouver ces valeurs si vos réglages viennent d'une version précédente de RetroArch PS3 v2026.
+
 Ces réglages se font sur la PS3, dans l'onglet *Réglages*. Faites-les **avec la clé branchée** pour qu'ils ne concernent que la clé. Quittez ensuite par *Menu principal > Quitter* pour les enregistrer.
 
-| Réglage | Où | Valeur conseillée |
+| Réglage | Où | Valeur d'origine |
 |---|---|---|
 | Le style du menu | *Réglages > Interface utilisateur > Menu* | **xmb** : icônes en ligne, comme la PS3. **ozone** : colonne à gauche. Il faut quitter puis relancer RetroArch. |
 | Les icônes du menu XMB | *Réglages > Interface utilisateur > Apparence > Thème d'icônes* | **Systématique** : une icône en couleur par console |
@@ -553,7 +556,7 @@ Ces réglages se font sur la PS3, dans l'onglet *Réglages*. Faites-les **avec l
 | La seconde image | *Réglages > Interface utilisateur > Apparence > Miniature secondaire* | **Écran titre** |
 | L'écran d'arrivée | *Réglages > Interface utilisateur > Page de démarrage* | **Listes de lecture** : RetroArch s'ouvre directement sur les jeux |
 | Les lignes sous chaque jeu | *Réglages > Listes de lecture > Afficher les sous-descriptions dans les listes de lecture* | **Désactivé** : listes plus compactes |
-| Les onglets inutiles | *Réglages > Interface utilisateur > Visibilité des éléments du menu* | *Afficher 'Images'*, *Afficher 'Musique'*, *Afficher 'Vidéo'*, *Afficher 'Jeu en réseau'* sur **Désactivé** |
+| Les entrées inutiles | *Réglages > Interface utilisateur > Visibilité des éléments du menu* | *Afficher 'Images'*, *Afficher 'Musique'*, *Afficher 'Jeu en réseau'*, *Afficher 'Charger un cœur'* et *Afficher 'Cœurs sans contenu'* sur **Désactivé** |
 | La musique et les sons du menu | *Réglages > Audio > Sons du menu* | *Mixeur* et *Musique de fond* sur **Activé** |
 
 `Telecharger-Images` récupère par défaut la jaquette et l'écran titre, qui correspondent à ces réglages. Pour afficher des captures en jeu, téléchargez-les avec `-Types boxarts,snaps` (section 9.3), puis choisissez *Capture d'écran* comme miniature.

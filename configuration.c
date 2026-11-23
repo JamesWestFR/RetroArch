@@ -846,6 +846,9 @@ static const enum menu_driver_enum MENU_DEFAULT_DRIVER = MENU_RGUI;
 #define MENU_DEFAULT_DRIVER (ios_running_on_ipad() ? MENU_OZONE : MENU_MATERIALUI)
 #elif defined(HAVE_MATERIALUI) && defined(RARCH_MOBILE)
 static const enum menu_driver_enum MENU_DEFAULT_DRIVER = MENU_MATERIALUI;
+#elif defined(__PSL1GHT__) && defined(HAVE_XMB)
+/* PS3: the console's own menu style, playlists as a carousel */
+static const enum menu_driver_enum MENU_DEFAULT_DRIVER = MENU_XMB;
 #elif defined(HAVE_OZONE)
 static const enum menu_driver_enum MENU_DEFAULT_DRIVER = MENU_OZONE;
 #elif defined(HAVE_XMB) && !defined(_XBOX)

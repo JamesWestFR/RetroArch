@@ -36,7 +36,7 @@
 | Fuse | ZX Spectrum | `.tzx` `.tap` `.z80` `.sna` `.szx` `.dsk` `.trd` `.zip` … |
 | NeoCD | Neo Geo CD | `.cue` `.chd` |
 
-L'interface est fournie avec les menus Ozone (par défaut), XMB et RGUI.
+L'interface est fournie avec les menus XMB (par défaut), Ozone et RGUI. XMB utilise le thème d'icônes *Systématique* : une icône en couleur par console.
 
 #### Versions des cores
 
@@ -97,6 +97,9 @@ Les noms des menus peuvent varier selon le CFW et la version de HEN.
 
 - Lancez *RetroArch v2026* depuis la colonne *Jeu*.
 - Le menu s'affiche dans la **langue de la console**.
+- RetroArch s'ouvre sur la page *Listes de lecture*. Elle contient *Importer du contenu*, puis vos listes de jeux. La touche de retour (**Rond** en Europe, **Croix** au Japon) mène au *Menu principal*.
+- La musique et les sons du menu sont activés. Pour les couper : *Réglages > Audio > Sons du menu*.
+- Pour alléger le menu, quelques entrées sont masquées : *Charger un cœur*, *Images*, *Jeu en réseau* et les cœurs sans contenu. *Réglages > Interface utilisateur > Visibilité des éléments du menu* les réaffiche.
 - La manette DualShock 3 est configurée automatiquement.
 - Pour revenir au menu pendant une partie, appuyez **en même temps sur L3 et R3** (les deux sticks enfoncés).
 - Par défaut, les jeux s'affichent au format d'image d'origine du système émulé (4:3 pour la plupart des consoles).
@@ -248,7 +251,7 @@ Dans le XMB, sélectionnez *RetroArch v2026*, appuyez sur **Triangle**, puis cho
 | Fuse | ZX Spectrum | `.tzx` `.tap` `.z80` `.sna` `.szx` `.dsk` `.trd` `.zip` … |
 | NeoCD | Neo Geo CD | `.cue` `.chd` |
 
-The menus included are Ozone (the default), XMB and RGUI.
+The menus included are XMB (the default), Ozone and RGUI. XMB uses the *Systematic* icon theme: one colour icon per console.
 
 #### Core versions
 
@@ -309,6 +312,9 @@ Menu names may differ between CFWs and HEN versions.
 
 - Start *RetroArch v2026* from the *Game* column.
 - The menu shows up in the **console's language**.
+- RetroArch opens on the *Playlists* page. It holds *Import Content*, followed by your game lists. The back button (**Circle** in Europe, **Cross** in Japan) leads to the *Main Menu*.
+- Menu music and sounds are on. To turn them off: *Settings > Audio > Menu Sounds*.
+- To keep the menu light, a few entries are hidden: *Load Core*, *Images*, *Netplay* and cores without content. *Settings > User Interface > Menu Item Visibility* shows them again.
 - The DualShock 3 controller is set up automatically.
 - To get back to the menu during a game, press **L3 and R3 together** (both sticks pushed in).
 - By default, games are shown in the original aspect ratio of the emulated system (4:3 for most consoles).
